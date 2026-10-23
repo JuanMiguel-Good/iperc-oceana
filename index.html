@@ -818,7 +818,7 @@ async function adminAddBulk(){
     const t=line.trim(); if(!t) continue;
     const sep=t.indexOf(",")>-1?",":t.indexOf(";")>-1?";":t.indexOf("\t")>-1?"\t":null;
     if(!sep){ S.adminErr="Cada linea debe tener DNI y nombre separados por coma. Ej: 40667929,Juan Pérez"; render(); return; }
-    const dv=t.slice(0,sep).trim(), nm=t.slice(sep+1).trim();
+    const sepAt=t.indexOf(sep), dv=t.slice(0,sepAt).trim(), nm=t.slice(sepAt+1).trim();
     if(!/^\d{8}$/.test(dv)||nm.length<3){ S.adminErr="Linea invalida: "+t; render(); return; }
     items.push({dni:dv,nombre:nm});
   }
