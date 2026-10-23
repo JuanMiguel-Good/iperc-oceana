@@ -465,7 +465,10 @@ function newCase(){
 function headUpdate(){
   $("#starsbox").innerHTML=STAR+"<span>"+S.pts+"</span>";
   $("#back-label").textContent=S.view==="intro"?"Salir":"Atrás";
-  const pr=$("#prog"); $("#navrow").hidden=(S.view==="start");
+  const pr=$("#prog");
+  const nav=$("#navrow");
+  nav.hidden=S.view==="start";
+  nav.style.display=S.view==="start"?"none":"flex";
   if(S.completed&&S.view==="intro"){
     pr.hidden=false;
     $("#plabel").textContent="Actividad completada";
