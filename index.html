@@ -428,7 +428,6 @@ function headUpdate(){
   $("#snd").innerHTML=SND?SND_ON:SND_OFF; $("#snd").setAttribute("aria-pressed",SND?"true":"false"); $("#snd").setAttribute("aria-label",SND?"Sonido activado":"Sonido desactivado");
 }
 function startView(){
-  if(S.resume&&!S.fresh) return `<div class="card"><div class="eyebrow">Juego de seguridad</div><h2>Tienes una partida en curso</h2><p>${S.name?"<b>"+esc(S.name)+"</b>, sigue":"Sigue"} donde la dejaste.</p><div class="row"><button class="btn phase" id="cont">Continuar</button><button class="btn alt" id="fresh">Empezar de nuevo</button></div></div>`;
   return `<div class="card"><div class="eyebrow">Juego de seguridad</div><h1>¿Sabrías qué hacer?</h1><p class="lead">Descubre los peligros de tu trabajo y practica cómo evitarlos.</p>
   <div class="how"><div><span class="hi">${MIS_ICON}</span><b>Encuentra</b><small>el peligro</small></div><div><span class="hi">${Q_ICON}</span><b>Decide</b><small>qué hacer</small></div><div><span class="hi">${STAR}</span><b>Gana</b><small>puntos</small></div></div>
   <div class="fld"><label for="nm">Nombre y apellido</label><input id="nm" type="text" maxlength="60" autocomplete="name" value="${esc(S.name)}" placeholder="Ej. Juan Pérez" aria-required="true"></div>
@@ -558,6 +557,17 @@ function applySave(d){
   S.view=d.view; S.resume=null;
   if(window._onApplySave) window._onApplySave(d);
 }
+function continueFromSave(d){
+  applySave(d);
+  if(d.view==="result") return;
+  if(d.view==="summary"){
+    if(S.si<S.secs.length-1){ S.si++; S.qi=0; S.view="intro"; }
+    else if(S.phase===1){ S.view="pick"; }
+    else S.view="result";
+    return;
+  }
+  S.view="intro";
+}
 (function(){ const last=lsGet(LAST); const d=last&&readSave(last); if(d){ S.name=d.name; S.dni=d.dni; S.resume={saved:d}; } })();
 function render(){
   const m=$("#main");
@@ -571,9 +581,9 @@ function bind(){
     const bad=(m,id)=>{er.textContent=m; er.hidden=false; $(id).focus();};
     if(nv.length<5||!/\S+\s+\S+/.test(nv)) return bad("Escribe tu nombre y apellido.","#nm");
     if(!/^\d{8}$/.test(dv)) return bad("Escribe tu DNI de 8 números.","#dni");
-    if(!S.fresh){ const sv=readSave(dv); if(sv){ applySave(sv); render(); window.scrollTo({top:0}); return; } }
+    if(!S.fresh){ const sv=readSave(dv); if(sv){ continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
     const startNew=()=>{S.name=nv; S.dni=dv; S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
-    if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} applySave(rs); render(); window.scrollTo({top:0}); } else startNew(); })(); }
+    if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); } else startNew(); })(); }
     else startNew();};
   const fr=$("#fresh"); if(fr) fr.onclick=()=>{S.fresh=true; render();};
   const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
