@@ -42,6 +42,20 @@ window._checkRemoteSave = async function (dni) {
   }
 };
 
+// Consulta el avance remoto por nombre. Devuelve el snap o null.
+window._checkRemoteSaveByName = async function (name) {
+  if (!hasSupabase()) return null;
+  try {
+    const { data, error } = await supabase.rpc('buscar_avance_por_nombre', { p_nombre: name });
+    if (error || !data) return null;
+    const snap = data.estado;
+    if (snap && snap.v === 1 && Array.isArray(snap.secs)) return snap;
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
 // Al volver la conexión, reintentar sincronización pendiente
 window.addEventListener('online', () => {
   if (pendingSnap && hasSupabase()) {

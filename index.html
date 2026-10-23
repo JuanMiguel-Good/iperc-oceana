@@ -173,6 +173,11 @@ details ul{margin:8px 0 0;padding-left:20px}
 .save-note{display:flex;align-items:center;gap:8px;margin-top:14px;padding:10px 14px;border-radius:14px;background:var(--ok-bg);color:var(--ok-fg);font-weight:600;font-size:.95rem}
 .save-note svg{width:22px;height:22px;flex:none}
 .celebrate .row{margin-top:16px}
+.dwarn{margin:10px 0;padding:14px 18px;border-radius:16px;background:var(--no-bg);color:var(--no-fg);border:2px solid var(--no-fg)}
+.dwarn b{font-size:1.15rem;display:block;margin-bottom:4px}
+.dwarn p{margin:4px 0 12px;font-weight:500;line-height:1.45}
+.dwarn .row{margin-top:0;flex-direction:column;gap:8px}
+.dwarn .row .btn{width:100%}
 @keyframes celebrate-in{0%{transform:translateY(10px) scale(.98);opacity:.3}100%{transform:none;opacity:1}}
 .tl.p2{border-style:dashed;border-color:var(--mis-bg);opacity:1}
 .tl .st.f2{background:var(--mis-bg);color:var(--mis-fg);border-color:var(--mis-bg)}
@@ -375,7 +380,7 @@ const SEC1=[
 ];
 const ACT_SEC={"Entre ciudades":["Viajes por carretera","Tránsito, robos y protestas durante la ruta.","auto"],"Muelles":["Muelles pesqueros","Caídas, agua, clima y sol en las instalaciones.","muelle"],"Espacios públicos":["Limpieza en espacios públicos","Sol, robos, alimentos y residuos punzocortantes.","sol"],"Limpieza":["Labores de limpieza","Químicos, esfuerzo, riesgo biológico, polvo y trabajo en solitario.","quimico"]};
 const N1=SEC1.reduce((a,s)=>a+s.ids.length,0);
-const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false};
+const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,dniWarn:null};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
@@ -454,6 +459,7 @@ function startView(){
   <div class="fld"><label for="nm">Nombre y apellido</label><input id="nm" type="text" maxlength="60" autocomplete="name" value="${esc(S.name)}" placeholder="Ej. Juan Pérez" aria-required="true"></div>
   <div class="fld"><label for="dni">DNI</label><input id="dni" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" value="${esc(S.dni)}" placeholder="8 dígitos" aria-required="true"></div>
   <p class="ferr" id="ferr" role="alert" hidden></p>
+  ${S.dniWarn?`<div class="dwarn" role="alert"><b>¿Te equivocaste con el DNI?</b><p>Encontramos un avance guardado a nombre de <b>${esc(S.dniWarn.saved.name)}</b> con el DNI <b>${esc(S.dniWarn.correctDni)}</b>. Si eres tú, es probable que hayas escrito un DNI distinto por error.</p><div class="row"><button class="btn" id="useRealDni">Continuar con mi avance (DNI ${esc(S.dniWarn.correctDni)})</button><button class="btn alt" id="dismissWarn">No soy esa persona, empezar de cero</button></div></div>`:""}
   <div class="row"><button class="btn" id="go">Empezar</button></div></div>`;
 }
 function secImg(s,i,cls){ return `<div class="${cls||"img"}" style="background:${TINT[i%TINT.length]}"><svg viewBox="0 0 120 120" role="img" aria-label="${esc(s.title)}">${IC[s.ic]}</svg></div>`; }
@@ -568,11 +574,17 @@ function readSave(dni){
   const raw=lsGet(SKEY+dni); if(!raw) return null;
   try{ const d=JSON.parse(raw); return d&&d.v===1&&d.dni===dni&&Array.isArray(d.secs)?d:null; }catch(e){ return null; }
 }
+function findSaveByName(name){
+  const norm=s=>(s||"").toLowerCase().replace(/\s+/g," ").trim();
+  const target=norm(name); if(!target) return null;
+  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!k||!k.startsWith(SKEY)) continue; try{ const d=JSON.parse(localStorage.getItem(k)); if(d&&d.v===1&&norm(d.name)===target) return d; }catch(e){} }
+  return null;
+}
 function applySave(d){
   S.name=d.name; S.dni=d.dni; S.pts=d.pts; S.phase=d.phase; S.si=d.si; S.qi=d.qi; S.log=d.log; S.hist=d.hist;
   S.secs=d.secs; S.secs1=d.phase===1?d.secs:d.secs1; S.p1len=d.p1len; S.p1pts=d.p1pts; S.secLog=d.secLog;
   S.puesto=d.pi>=0?P[d.pi]:null; if(typeof d.snd==="boolean") SND=d.snd;
-  S.modal=false; S.fresh=false;
+  S.modal=false; S.fresh=false; S.dniWarn=null;
   if(d.view==="play") newCase();
   S.view=d.view; S.resume=null;
   if(window._onApplySave) window._onApplySave(d);
@@ -613,12 +625,20 @@ function bind(){
     const bad=(m,id)=>{er.textContent=m; er.hidden=false; $(id).focus();};
     if(nv.length<5||!/\S+\s+\S+/.test(nv)) return bad("Escribe tu nombre y apellido.","#nm");
     if(!/^\d{8}$/.test(dv)) return bad("Escribe tu DNI de 8 números.","#dni");
+    S.dniWarn=null;
     if(!S.fresh){ const sv=readSave(dv); if(sv){ continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
-    const startNew=()=>{S.name=nv; S.dni=dv; S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
-    if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); } else startNew(); })(); }
-    else startNew();};
+    const startNew=()=>{S.name=nv; S.dni=dv; S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.dniWarn=null; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
+    const checkNameAndStart=()=>{
+      const lm=findSaveByName(nv);
+      if(lm&&lm.dni!==dv){ S.dniWarn={correctDni:lm.dni,saved:lm}; render(); window.scrollTo({top:0}); return; }
+      if(window._checkRemoteSaveByName){ (async()=>{ const rs=await window._checkRemoteSaveByName(nv); if(rs&&rs.dni!==dv){ try{localStorage.setItem(SKEY+rs.dni,JSON.stringify(rs));}catch(e){} S.dniWarn={correctDni:rs.dni,saved:rs}; render(); window.scrollTo({top:0}); return; } startNew(); })(); }
+      else startNew();};
+    if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); return; } checkNameAndStart(); })(); }
+    else checkNameAndStart();};
   const fr=$("#fresh"); if(fr) fr.onclick=()=>{S.fresh=true; render();};
   const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
+  const urd=$("#useRealDni"); if(urd) urd.onclick=()=>{ if(S.dniWarn&&S.dniWarn.saved){ const sv=S.dniWarn.saved; S.dniWarn=null; try{localStorage.setItem(LAST,sv.dni);}catch(e){} continueFromSave(sv); render(); window.scrollTo({top:0}); } };
+  const dw=$("#dismissWarn"); if(dw) dw.onclick=()=>{ S.dniWarn=null; S.fresh=true; render(); };
   ["#nm","#dni"].forEach(id=>{const el=$(id); if(el) el.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};});
   const dn=$("#dni"); if(dn) dn.oninput=()=>{dn.value=dn.value.replace(/\D/g,"").slice(0,8);};
   const bg=$("#begin"); if(bg) bg.onclick=()=>{S.qi=0; S.secLog=S.log.length; newCase(); S.view="play"; render(); window.scrollTo({top:0});};
