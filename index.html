@@ -568,6 +568,18 @@ function continueFromSave(d){
   }
   S.view="intro";
 }
+function goToFichas(){
+  S.modal=false;
+  S.resume=null;
+  S.fresh=false;
+  if(S.view==="summary"){
+    if(S.si<S.secs.length-1){ S.si++; S.qi=0; S.view="intro"; }
+    else if(S.phase===1) S.view="pick";
+    else S.view="result";
+    return;
+  }
+  if(S.view!=="intro"&&S.view!=="pick"&&S.view!=="result") S.view="intro";
+}
 (function(){ const last=lsGet(LAST); const d=last&&readSave(last); if(d){ S.name=d.name; S.dni=d.dni; S.resume={saved:d}; } })();
 function render(){
   const m=$("#main");
@@ -643,7 +655,7 @@ function back(){
   render(); window.scrollTo({top:0});
 }
 $("#back").onclick=back;
-$("#home").onclick=()=>{ S.fresh=false; if(S.view!=="start"){ S.resume=S.view; } S.view="start"; render(); window.scrollTo({top:0}); };
+$("#home").onclick=()=>{ goToFichas(); render(); window.scrollTo({top:0}); };
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.modal) closeModal(); });
 $("#snd").onclick=()=>{SND=!SND; if(SND) chime(); headUpdate();};
 window.S=S; window._rerender=render;
