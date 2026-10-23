@@ -189,6 +189,9 @@ details ul{margin:8px 0 0;padding-left:20px}
 .how small{display:block;color:var(--muted);font-size:.9rem}
 .fld{margin:10px 0}.fld label{display:block;font-weight:700;margin-bottom:6px}.ferr{color:var(--in-fg);background:var(--in-bg);font-weight:700;padding:8px 14px;border-radius:12px;margin:8px 0}.dnil{color:var(--muted);font-size:.9rem;margin-top:2px}
 </style>
+  <meta property="og:image" content="https://bolt.new/static/og_default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://bolt.new/static/og_default.png">
 </head>
 <body>
 
@@ -538,8 +541,9 @@ function saveProgress(){
   if(view==="start"){ if(!S.resume) return; view=S.resume; }
   const snap={v:1,t:Date.now(),name:S.name,dni:S.dni,pts:S.pts,phase:S.phase,si:S.si,qi:S.qi,view,log:S.log,hist:S.hist,
     secs:S.secs,secs1:S.phase===1?null:S.secs1,p1len:S.p1len,p1pts:S.p1pts,secLog:S.secLog,
-    pi:S.puesto?P.indexOf(S.puesto):-1,snd:SND};
+    pi:S.puesto?P.indexOf(S.puesto):-1,pn:S.puesto?S.puesto.name:null,snd:SND};
   if(lsSet(SKEY+S.dni,JSON.stringify(snap))) lsSet(LAST,S.dni);
+  if(window._onSaveProgress) window._onSaveProgress(snap);
 }
 function readSave(dni){
   const raw=lsGet(SKEY+dni); if(!raw) return null;
@@ -552,6 +556,7 @@ function applySave(d){
   S.modal=false; S.fresh=false;
   if(d.view==="play") newCase();
   S.view=d.view; S.resume=null;
+  if(window._onApplySave) window._onApplySave(d);
 }
 (function(){ const last=lsGet(LAST); const d=last&&readSave(last); if(d){ S.name=d.name; S.dni=d.dni; S.resume={saved:d}; } })();
 function render(){
@@ -567,7 +572,9 @@ function bind(){
     if(nv.length<5||!/\S+\s+\S+/.test(nv)) return bad("Escribe tu nombre y apellido.","#nm");
     if(!/^\d{8}$/.test(dv)) return bad("Escribe tu DNI de 8 números.","#dni");
     if(!S.fresh){ const sv=readSave(dv); if(sv){ applySave(sv); render(); window.scrollTo({top:0}); return; } }
-    S.name=nv; S.dni=dv; S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
+    const startNew=()=>{S.name=nv; S.dni=dv; S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
+    if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} applySave(rs); render(); window.scrollTo({top:0}); } else startNew(); })(); }
+    else startNew();};
   const fr=$("#fresh"); if(fr) fr.onclick=()=>{S.fresh=true; render();};
   const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
   ["#nm","#dni"].forEach(id=>{const el=$(id); if(el) el.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};});
@@ -629,8 +636,10 @@ $("#back").onclick=back;
 $("#home").onclick=()=>{ S.fresh=false; if(S.view!=="start"){ S.resume=S.view; } S.view="start"; render(); window.scrollTo({top:0}); };
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.modal) closeModal(); });
 $("#snd").onclick=()=>{SND=!SND; if(SND) chime(); headUpdate();};
+window.S=S; window._rerender=render;
 render();
 </script>
+<script type="module" src="/src/sync.js"></script>
 
 </body>
 </html>
