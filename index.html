@@ -825,9 +825,12 @@ async function adminAddBulk(){
   if(!items.length){ S.adminErr="No se encontraron entradas validas."; render(); return; }
   try{
     const { supabase } = await import('./src/supabase.js');
-    const { data, error } = await supabase.rpc('agregar_participantes_lote', { p_lista: JSON.stringify(items) });
+    const { data, error } = await supabase.rpc('agregar_participantes_lote', { p_lista: items });
     if(error){ S.adminErr="No se pudo agregar: "+error.message; render(); return; }
-    const r=data||{}; S.adminMsg=(r.agregados||0)+" participantes agregados."+(r.errores&&r.errores.length?" Errores: "+r.errores.join("; "):""); $("#abulk").value=""; loadAdminData();
+    const r=data||{};
+    if(r.errores&&r.errores.length){ S.adminErr=(r.agregados||0)+" agregados. Errores: "+r.errores.join("; "); }
+    else { S.adminMsg=(r.agregados||0)+" participantes agregados correctamente."; }
+    $("#abulk").value=""; loadAdminData();
   }catch(e){ S.adminErr="Error de conexión."; render(); }
 }
 function tapHot(el){
