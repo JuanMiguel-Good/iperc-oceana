@@ -383,7 +383,7 @@ const SEC1=[
 const ACT_SEC={"Entre ciudades":["Viajes por carretera","Tránsito, robos y protestas durante la ruta.","auto"],"Muelles":["Muelles pesqueros","Caídas, agua, clima y sol en las instalaciones.","muelle"],"Espacios públicos":["Limpieza en espacios públicos","Sol, robos, alimentos y residuos punzocortantes.","sol"],"Limpieza":["Labores de limpieza","Químicos, esfuerzo, riesgo biológico, polvo y trabajo en solitario.","quimico"]};
 const N1=SEC1.reduce((a,s)=>a+s.ids.length,0);
 const ADMIN_DNI="40667929";
-const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,completed:false,admin:false,adminData:null,adminMsg:null,adminErr:null};
+const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,completed:false,stageSeen:null,admin:false,adminData:null,adminMsg:null,adminErr:null};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
@@ -469,6 +469,15 @@ function newCase(){
   }
   S.hist[k]=S.cs;
 }
+const totalCases=secs=>secs.reduce((total,s)=>total+s.cases.length,0);
+function journeyTotal(){
+  if(S.completed) return totalCases(S.secs);
+  return S.phase===2?totalCases(S.secs1)+totalCases(S.secs):totalCases(S.secs);
+}
+function journeyPct(){
+  const total=journeyTotal();
+  return total?Math.round(S.log.length/total*100):0;
+}
 function headUpdate(){
   $("#starsbox").innerHTML=STAR+"<span>"+S.pts+"</span>";
   $("#back-label").textContent=S.view==="intro"?"Salir":"Atrás";
@@ -479,15 +488,16 @@ function headUpdate(){
   if(S.completed&&S.view==="intro"){
     pr.hidden=false;
     $("#plabel").textContent="Actividad completada";
-    $("#pcount").textContent="";
+    $("#pcount").textContent="100% · "+progressStage(100);
     $("#pfill").style.width="100%";
-  } else if(["intro","play","summary"].includes(S.view)){
+  } else if(["intro","play","summary","result"].includes(S.view)){
     pr.hidden=false;
-    const total=S.secs.reduce((a,s)=>a+s.cases.length,0);
+    const total=totalCases(S.secs);
     const done=S.secs.slice(0,S.si).reduce((a,s)=>a+s.cases.length,0)+(S.view==="play"?S.qi:S.view==="summary"?sec().cases.length:0);
-    $("#plabel").textContent=(S.phase===1?"Parte 1":"Parte 2")+" · Sección "+(S.si+1)+" de "+S.secs.length+" · "+sec().title;
-    $("#pcount").textContent=S.view==="play"?"Caso "+(S.qi+1)+" de "+sec().cases.length:"";
-    $("#pfill").style.width=Math.round(done/total*100)+"%";
+    const pct=journeyPct();
+    $("#plabel").textContent=S.view==="result"?"Avance total":(S.phase===1?"Parte 1":"Parte 2")+" · Sección "+(S.si+1)+" de "+S.secs.length+" · "+sec().title;
+    $("#pcount").textContent=S.phase===1?"Fase 1 · "+pct+"% · "+progressStage(pct)+(S.view==="play"?" · Caso "+(S.qi+1)+" de "+sec().cases.length:""):pct+"% · "+progressStage(pct);
+    $("#pfill").style.width=(S.phase===1?Math.round(done/total*100):pct)+"%";
   } else pr.hidden=true;
   $("#snd").innerHTML=SND?SND_ON:SND_OFF; $("#snd").setAttribute("aria-pressed",SND?"true":"false"); $("#snd").setAttribute("aria-label",SND?"Sonido activado":"Sonido desactivado");
 }
@@ -505,7 +515,7 @@ function startView(){
 function secImg(s,i,cls){ return `<div class="${cls||"img"}" style="background:${TINT[i%TINT.length]}"><svg viewBox="0 0 120 120" role="img" aria-label="${esc(s.title)}">${IC[s.ic]}</svg></div>`; }
 const P2TILE=`<div class="tl p2">${secImg({title:"Parte 2",ic:"puesto"},4)}<span class="st f2">Parte 2</span><div class="tx"><b>Según tu puesto</b><small>Peligros propios de tu trabajo</small></div></div>`;
 function completedView(){
-  const total=S.log.length,ok=S.log.filter(x=>x.ok).length,pct=Math.round(ok/total*100);
+  const total=S.log.length,ok=S.log.filter(x=>x.ok).length,pct=journeyPct();
   const rank=progressStage(pct);
   const tiles=S.secs.map((x,i)=>`<div class="tl done">${secImg(x,i)}<span class="st ok" aria-label="Completada">\u2713</span><div class="tx"><b>${esc(x.title)}</b><small>${x.cases.length} ${x.cases.length===1?"caso":"casos"}</small></div></div>`).join("");
   const nm=S.name.trim().split(" ")[0];
@@ -523,10 +533,17 @@ function secOk(si){ let n=0; S.secs[si].cases.forEach((_,q)=>{const cs=S.hist[S.
 function summaryView(){
   const n=sec().cases.length, ok=secOk(S.si);
   const last=S.si===S.secs.length-1;
+  const pct=journeyPct();
+  const stage=progressStage(pct);
+  let stageNotice="";
+  if(S.phase===2&&stage!==S.stageSeen){
+    stageNotice=`<div class="save-note"><b>Nueva etapa:</b>&nbsp;${stage}</div>`;
+    S.stageSeen=stage;
+  }
   const msg=ok===n?"Sección perfecta. Todo a la primera.":ok>=n/2?"Buen avance.":"Cada caso incluye los controles del IPERC.";
   const nextLabel=last&&S.phase===1?"Elegir mi puesto ahora":last?"Ver mi resultado ahora":"Siguiente sección ahora";
   const nextText=last&&S.phase===1?"Ahora practicarás los peligros más relacionados con tu puesto.":last?"Ya puedes revisar tu resultado y tus recomendaciones.":"La siguiente sección te espera.";
-  return `<div class="card hero celebrate">${secImg(sec(),S.si,"himg")}<div class="htx"><div class="eyebrow">Sección completada</div><h2>¡Felicitaciones!</h2><h3>${esc(sec().title)}</h3><div class="score" style="font-size:2.8rem">${ok} de ${n}</div><p style="margin:6px 0 0">respuestas correctas a la primera. ${msg}</p><p style="margin:8px 0 0">${nextText}</p><div class="save-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tu avance está guardado. Puedes continuar ahora o hacerlo después sin perderlo.</div><div class="row"><button class="btn" id="secnow">${nextLabel} <span aria-hidden="true">→</span></button><button class="btn alt" id="seclater">Continuar después</button></div></div></div>`;
+  return `<div class="card hero celebrate">${secImg(sec(),S.si,"himg")}<div class="htx"><div class="eyebrow">Sección completada</div><h2>¡Felicitaciones!</h2><h3>${esc(sec().title)}</h3><div class="score" style="font-size:2.8rem">${ok} de ${n}</div><p style="margin:6px 0 0">respuestas correctas a la primera. ${msg}</p><p style="margin:8px 0 0">${nextText}</p>${stageNotice}<div class="save-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tu avance está guardado. Puedes continuar ahora o hacerlo después sin perderlo.</div><div class="row"><button class="btn" id="secnow">${nextLabel} <span aria-hidden="true">→</span></button><button class="btn alt" id="seclater">Continuar después</button></div></div></div>`;
 }
 function modalHtml(){
   const c=cur(), cs=S.cs; let body;
@@ -571,7 +588,7 @@ function pickView(){
 }
 function buildPhase2(pi){
   Object.keys(S.hist).forEach(k=>{if(k.startsWith("2|")) delete S.hist[k];});
-  const p=P[pi]; S.puesto=p; S.phase=2; S.completed=false;
+  const p=P[pi]; S.puesto=p; S.phase=2; S.completed=false; S.stageSeen=null;
   const secs=[];
   ["Entre ciudades","Muelles","Espacios públicos","Limpieza"].forEach(a=>{
     const ids=p.items.filter(x=>H[x[0]].n<14&&H[x[0]].act===a).map(x=>x[0]).sort((x,y)=>x-y);
@@ -583,10 +600,10 @@ function buildPhase2(pi){
   const want=nspec<4?4:2;
   const duels=shuffle(pairs).slice(0,want).map(([a,b])=>({t:"duel",a:a[0],b:b[0],la:a[1],lb:b[1]}));
   secs.push({title:"¿Cuál es más grave?",sub:"Compara dos peligros de tu matriz y elige el de nivel más alto.",ic:"balanza",cases:duels});
-  S.secs=secs; S.si=0; S.qi=0; S.view="intro";
+  S.secs=secs; S.stageSeen=progressStage(journeyPct()); S.si=0; S.qi=0; S.view="intro";
 }
 function resultView(){
-  const total=S.log.length, ok=S.log.filter(x=>x.ok).length, pct=Math.round(ok/total*100);
+  const total=S.log.length, ok=S.log.filter(x=>x.ok).length, pct=journeyPct();
   const rank=progressStage(pct);
   const areas={}; S.log.forEach(x=>{(areas[x.area]=areas[x.area]||{ok:0,n:0}); areas[x.area].n++; if(x.ok) areas[x.area].ok++;});
   const bars=Object.keys(areas).map(a=>{const v=areas[a]; return `<div class="bar"><span>${esc(a)}</span><span class="tr"><i style="width:${Math.round(v.ok/v.n*100)}%"></i></span><span>${v.ok}/${v.n}</span></div>`;}).join("");
@@ -613,7 +630,7 @@ function saveProgress(){
   if(S.admin||!S.dni||!S.name||!S.secs.length) return;
   let view=S.view;
   if(view==="start"){ if(!S.resume) return; view=S.resume; }
-  const snap={v:1,t:Date.now(),name:S.name,dni:S.dni,pts:S.pts,phase:S.phase,si:S.si,qi:S.qi,view,log:S.log,hist:S.hist,
+  const snap={v:1,t:Date.now(),name:S.name,dni:S.dni,pts:S.pts,phase:S.phase,si:S.si,qi:S.qi,view,log:S.log,hist:S.hist,stageSeen:S.stageSeen,
     secs:S.secs,secs1:S.phase===1?null:S.secs1,p1len:S.p1len,p1pts:S.p1pts,secLog:S.secLog,
     pi:S.puesto?P.indexOf(S.puesto):-1,pn:S.puesto?S.puesto.name:null,snd:SND,completed:S.completed};
   if(lsSet(SKEY+S.dni,JSON.stringify(snap))) lsSet(LAST,S.dni);
@@ -626,7 +643,7 @@ function readSave(dni){
 function applySave(d){
   S.name=d.name; S.dni=d.dni; S.pts=d.pts; S.phase=d.phase; S.si=d.si; S.qi=d.qi; S.log=d.log; S.hist=d.hist;
   S.secs=d.secs; S.secs1=d.phase===1?d.secs:d.secs1; S.p1len=d.p1len; S.p1pts=d.p1pts; S.secLog=d.secLog;
-  S.puesto=d.pi>=0?P[d.pi]:null; if(typeof d.snd==="boolean") SND=d.snd;
+  S.puesto=d.pi>=0?P[d.pi]:null; S.stageSeen=d.stageSeen||null; if(typeof d.snd==="boolean") SND=d.snd;
   S.modal=false; S.fresh=false; S.completed=!!d.completed;
   if(d.view==="play") newCase();
   S.view=d.view; S.resume=null;
@@ -672,7 +689,7 @@ function bind(){
     const enterGame=(nombre)=>{
       S.name=nombre; S.dni=dv;
       if(!S.fresh){ const sv=readSave(dv); if(sv){ if(sv.name!==nombre) sv.name=nombre; continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
-      const startNew=()=>{S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.completed=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
+      const startNew=()=>{S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.completed=false; S.stageSeen=null; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
       if(S.fresh){ startNew(); return; }
       if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ if(rs.name!==nombre) rs.name=nombre; try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); return; } startNew(); })(); }
       else startNew();
