@@ -13,7 +13,7 @@ async function doSync() {
       p_estado: s,
       p_puntos: s.pts,
       p_puesto: s.pn || null,
-      p_completado: s.view === 'result',
+      p_completado: s.completed === true || s.view === 'result',
     });
     pendingSnap = null;
   } catch (e) {
