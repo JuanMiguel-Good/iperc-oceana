@@ -137,7 +137,7 @@ details ul{margin:8px 0 0;padding-left:20px}
 .path li.cur .dot{background:var(--ink);color:var(--surface)}
 .path b{display:block;font-weight:600}
 .path li span:not(.dot){font-size:.85rem;color:var(--muted)}
-@media (prefers-reduced-motion:reduce){.mission,.modal{animation:none}}
+@media (prefers-reduced-motion:reduce){.mission,.modal,.celebrate{animation:none}}
 
 .hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
 .himg{flex:0 0 150px;width:150px;aspect-ratio:1;border-radius:24px;display:grid;place-items:center;border:3px solid var(--line)}
@@ -167,6 +167,13 @@ details ul{margin:8px 0 0;padding-left:20px}
 .phasecard p{opacity:.95}
 .phasecard .ptag{display:inline-block;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;font-weight:700;background:var(--sun);color:#1B2A5B;padding:4px 12px;border-radius:99px;margin-bottom:10px}
 .phasecard .btn.phase{background:var(--go);color:var(--go-ink)}
+.celebrate{border-color:var(--go);box-shadow:0 10px 0 rgba(30,158,106,.16);animation:celebrate-in .55s ease-out}
+.celebrate .himg{background:var(--ok-bg)!important;border-color:var(--go)}
+.celebrate .score{color:var(--go)}
+.save-note{display:flex;align-items:center;gap:8px;margin-top:14px;padding:10px 14px;border-radius:14px;background:var(--ok-bg);color:var(--ok-fg);font-weight:600;font-size:.95rem}
+.save-note svg{width:22px;height:22px;flex:none}
+.celebrate .row{margin-top:16px}
+@keyframes celebrate-in{0%{transform:translateY(10px) scale(.98);opacity:.3}100%{transform:none;opacity:1}}
 .tl.p2{border-style:dashed;border-color:var(--mis-bg);opacity:1}
 .tl .st.f2{background:var(--mis-bg);color:var(--mis-fg);border-color:var(--mis-bg)}
 .scale{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -392,6 +399,20 @@ function chime(){
     });
   }catch(e){}
 }
+function fanfare(){
+  if(!SND) return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    const t=AC.currentTime;
+    [[392,0],[523.25,.12],[659.25,.24],[783.99,.38],[1046.5,.54],[1318.5,.7]].forEach(([f,d],i)=>{
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.type=i<4?"triangle":"sine"; o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+d); g.gain.linearRampToValueAtTime(i<4?.18:.24,t+d+.03); g.gain.exponentialRampToValueAtTime(.001,t+d+.6);
+      o.connect(g); g.connect(AC.destination); o.start(t+d); o.stop(t+d+.65);
+    });
+  }catch(e){}
+}
 const SND_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const SND_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M16 9l6 6M22 9l-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 const MIS_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
@@ -448,10 +469,9 @@ function summaryView(){
   const n=sec().cases.length, ok=secOk(S.si);
   const last=S.si===S.secs.length-1;
   const msg=ok===n?"Sección perfecta. Todo a la primera.":ok>=n/2?"Buen avance.":"Cada caso incluye los controles del IPERC.";
-  const hero=`<div class="card hero">${secImg(sec(),S.si,"himg")}<div class="htx"><div class="eyebrow">Sección completada</div><h2>${esc(sec().title)}</h2><div class="score" style="font-size:2.8rem">${ok} de ${n}</div><p style="margin:6px 0 ${last?0:14}px">respuestas correctas a la primera. ${msg}</p>${last?"":'<button class="btn" id="secnext">Siguiente sección</button>'}</div></div>`;
-  if(last&&S.phase===1) return hero+`<div class="phasecard"><div class="ptag">Parte 1 completada</div><h2>Ahora, tu puesto</h2><p>Elige tu puesto de trabajo y practica con los peligros que más te tocan.</p><button class="btn phase" id="secnext">Elegir mi puesto <span aria-hidden="true">→</span></button></div>`;
-  if(last) return hero+`<div class="phasecard"><div class="ptag">Parte 2 completada</div><h2>Terminaste el recorrido</h2><p>Mira cómo te fue y qué debes recordar en tu puesto.</p><button class="btn phase" id="secnext">Ver mi resultado <span aria-hidden="true">→</span></button></div>`;
-  return hero;
+  const nextLabel=last&&S.phase===1?"Elegir mi puesto ahora":last?"Ver mi resultado ahora":"Siguiente sección ahora";
+  const nextText=last&&S.phase===1?"Ahora practicarás los peligros más relacionados con tu puesto.":last?"Ya puedes revisar tu resultado y tus recomendaciones.":"La siguiente sección te espera.";
+  return `<div class="card hero celebrate">${secImg(sec(),S.si,"himg")}<div class="htx"><div class="eyebrow">Sección completada</div><h2>¡Felicitaciones!</h2><h3>${esc(sec().title)}</h3><div class="score" style="font-size:2.8rem">${ok} de ${n}</div><p style="margin:6px 0 0">respuestas correctas a la primera. ${msg}</p><p style="margin:8px 0 0">${nextText}</p><div class="save-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Tu avance está guardado. Puedes continuar ahora o hacerlo después sin perderlo.</div><div class="row"><button class="btn" id="secnow">${nextLabel} <span aria-hidden="true">→</span></button><button class="btn alt" id="seclater">Continuar después</button></div></div></div>`;
 }
 function modalHtml(){
   const c=cur(), cs=S.cs; let body;
@@ -602,7 +622,7 @@ function bind(){
   ["#nm","#dni"].forEach(id=>{const el=$(id); if(el) el.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};});
   const dn=$("#dni"); if(dn) dn.oninput=()=>{dn.value=dn.value.replace(/\D/g,"").slice(0,8);};
   const bg=$("#begin"); if(bg) bg.onclick=()=>{S.qi=0; S.secLog=S.log.length; newCase(); S.view="play"; render(); window.scrollTo({top:0});};
-  const sn=$("#secnext"); if(sn) sn.onclick=()=>{
+  const sn=$("#secnow"); if(sn) sn.onclick=()=>{
     if(S.si<S.secs.length-1){S.si++; S.view="intro";}
     else if(S.phase===1){S.p1len=S.log.length; S.p1pts=S.pts; S.view="pick";}
     else S.view="result";
@@ -614,6 +634,7 @@ function bind(){
   const mc=$("#mclose"), mt=$("#mcont"), mb=$("#mbg");
   if(mc) mc.onclick=closeModal; if(mt) mt.onclick=continueCase;
   if(mb){ mb.onclick=e=>{ if(e.target===mb) closeModal(); }; if(mt) mt.focus(); }
+  const sl=$("#seclater"); if(sl) sl.onclick=()=>{S.resume="summary"; S.view="start"; render(); window.scrollTo({top:0});};
   document.querySelectorAll(".pk").forEach(b=>b.onclick=()=>{S.log=S.log.slice(0,S.p1len); S.pts=S.p1pts; buildPhase2(+b.dataset.p); render(); window.scrollTo({top:0});});
   const ch=$("#change"); if(ch) ch.onclick=()=>{S.view="pick"; render(); window.scrollTo({top:0});};
   const ag=$("#again"); if(ag) ag.onclick=()=>{S.fresh=true; S.resume=null; S.view="start"; render(); window.scrollTo({top:0});};
@@ -641,7 +662,7 @@ function tapOpt(k){
 }
 function next(){
   if(S.qi<sec().cases.length-1){ S.qi++; newCase(); S.view="play"; }
-  else S.view="summary";
+  else { S.view="summary"; fanfare(); }
   render(); window.scrollTo({top:0});
 }
 function continueCase(){
