@@ -375,7 +375,8 @@ const SEC1=[
 ];
 const ACT_SEC={"Entre ciudades":["Viajes por carretera","Tránsito, robos y protestas durante la ruta.","auto"],"Muelles":["Muelles pesqueros","Caídas, agua, clima y sol en las instalaciones.","muelle"],"Espacios públicos":["Limpieza en espacios públicos","Sol, robos, alimentos y residuos punzocortantes.","sol"],"Limpieza":["Labores de limpieza","Químicos, esfuerzo, riesgo biológico, polvo y trabajo en solitario.","quimico"]};
 const N1=SEC1.reduce((a,s)=>a+s.ids.length,0);
-const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false};
+const ADMIN_DNI="40667929";
+const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,admin:false,adminData:null,adminMsg:null,adminErr:null};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
@@ -449,12 +450,15 @@ function headUpdate(){
   $("#snd").innerHTML=SND?SND_ON:SND_OFF; $("#snd").setAttribute("aria-pressed",SND?"true":"false"); $("#snd").setAttribute("aria-label",SND?"Sonido activado":"Sonido desactivado");
 }
 function startView(){
+  if(S.admin){ return adminView(); }
+  const hasResume=!!(S.resume&&S.resume.saved);
   return `<div class="card"><div class="eyebrow">Juego de seguridad</div><h1>¿Sabrías qué hacer?</h1><p class="lead">Descubre los peligros de tu trabajo y practica cómo evitarlos.</p>
   <div class="how"><div><span class="hi">${MIS_ICON}</span><b>Encuentra</b><small>el peligro</small></div><div><span class="hi">${Q_ICON}</span><b>Decide</b><small>qué hacer</small></div><div><span class="hi">${STAR}</span><b>Gana</b><small>puntos</small></div></div>
-  <div class="fld"><label for="nm">Nombre y apellido</label><input id="nm" type="text" maxlength="60" autocomplete="name" value="${esc(S.name)}" placeholder="Ej. Juan Pérez" aria-required="true"></div>
-  <div class="fld"><label for="dni">DNI</label><input id="dni" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" value="${esc(S.dni)}" placeholder="8 dígitos" aria-required="true"></div>
+  <div class="fld"><label for="dni">Ingresa tu DNI</label><input id="dni" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" value="${esc(S.dni)}" placeholder="8 dígitos" aria-required="true"></div>
   <p class="ferr" id="ferr" role="alert" hidden></p>
-  <div class="row"><button class="btn" id="go">Empezar</button></div></div>`;
+  ${hasResume?`<div class="row"><button class="btn alt" id="cont">Continuar donde me quedé</button></div>`:""}
+  <div class="row"><button class="btn" id="go">Empezar</button></div>
+  <p style="margin-top:14px;font-size:.85rem;color:var(--muted)">Solo puedes entrar si estás registrado. Si no lo estás, contacta con quien administra el juego.</p></div>`;
 }
 function secImg(s,i,cls){ return `<div class="${cls||"img"}" style="background:${TINT[i%TINT.length]}"><svg viewBox="0 0 120 120" role="img" aria-label="${esc(s.title)}">${IC[s.ic]}</svg></div>`; }
 const P2TILE=`<div class="tl p2">${secImg({title:"Parte 2",ic:"puesto"},4)}<span class="st f2">Parte 2</span><div class="tx"><b>Según tu puesto</b><small>Peligros propios de tu trabajo</small></div></div>`;
@@ -555,7 +559,7 @@ const SKEY="detectives-seguridad:v1:", LAST="detectives-seguridad:ultimo";
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
 function saveProgress(){
-  if(!S.dni||!S.name||!S.secs.length) return;
+  if(S.admin||!S.dni||!S.name||!S.secs.length) return;
   let view=S.view;
   if(view==="start"){ if(!S.resume) return; view=S.resume; }
   const snap={v:1,t:Date.now(),name:S.name,dni:S.dni,pts:S.pts,phase:S.phase,si:S.si,qi:S.qi,view,log:S.log,hist:S.hist,
@@ -567,12 +571,6 @@ function saveProgress(){
 function readSave(dni){
   const raw=lsGet(SKEY+dni); if(!raw) return null;
   try{ const d=JSON.parse(raw); return d&&d.v===1&&d.dni===dni&&Array.isArray(d.secs)?d:null; }catch(e){ return null; }
-}
-function findSaveByName(name){
-  const norm=s=>(s||"").toLowerCase().replace(/\s+/g," ").trim();
-  const target=norm(name); if(!target) return null;
-  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!k||!k.startsWith(SKEY)) continue; try{ const d=JSON.parse(localStorage.getItem(k)); if(d&&d.v===1&&norm(d.name)===target) return d; }catch(e){} }
-  return null;
 }
 function applySave(d){
   S.name=d.name; S.dni=d.dni; S.pts=d.pts; S.phase=d.phase; S.si=d.si; S.qi=d.qi; S.log=d.log; S.hist=d.hist;
@@ -615,28 +613,30 @@ function render(){
 function closeModal(){ S.modal=false; render(); const n=$("#nx"); if(n) n.focus(); }
 function bind(){
   const g=$("#go"); if(g) g.onclick=()=>{
-    const nv=($("#nm").value||"").trim().replace(/\s+/g," "), dv=($("#dni").value||"").trim(), er=$("#ferr");
-    const norm=s=>(s||"").toLowerCase().replace(/\s+/g," ").trim();
-    const bad=(m,id)=>{er.textContent=m; er.hidden=false; $(id).focus();};
+    const dv=($("#dni").value||"").trim(), er=$("#ferr");
+    const bad=(m)=>{er.textContent=m; er.hidden=false; $("#dni").focus();};
     er.hidden=true;
-    if(nv.length<5||!/\S+\s+\S+/.test(nv)) return bad("Escribe tu nombre y apellido.","#nm");
-    if(!/^\d{8}$/.test(dv)) return bad("Escribe tu DNI de 8 números.","#dni");
-    const nameMatches=sv=>norm(sv.name)===norm(nv);
-    const errDni="El nombre no coincide con el DNI registrado. Verifica tus datos.";
-    if(!S.fresh){ const sv=readSave(dv); if(sv){ if(!nameMatches(sv)) return bad(errDni,"#nm"); continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
-    const startNew=()=>{S.name=nv; S.dni=dv; S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
-    if(S.fresh){ startNew(); return; }
-    const checkNameAndStart=()=>{
-      const lm=findSaveByName(nv);
-      if(lm&&lm.dni!==dv) return bad(errDni,"#nm");
-      if(window._checkRemoteSaveByName){ (async()=>{ const rs=await window._checkRemoteSaveByName(nv); if(rs&&rs.dni&&rs.dni!==dv) return bad(errDni,"#nm"); startNew(); })(); }
-      else startNew();};
-    if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ if(norm(rs.name)!==norm(nv)) return bad(errDni,"#nm"); try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); return; } checkNameAndStart(); })(); }
-    else checkNameAndStart();};
+    if(!/^\d{8}$/.test(dv)) return bad("Escribe tu DNI de 8 números.");
+    const enterGame=(nombre)=>{
+      S.name=nombre; S.dni=dv;
+      if(!S.fresh){ const sv=readSave(dv); if(sv){ if(sv.name!==nombre) sv.name=nombre; continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
+      const startNew=()=>{S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
+      if(S.fresh){ startNew(); return; }
+      if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ if(rs.name!==nombre) rs.name=nombre; try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); return; } startNew(); })(); }
+      else startNew();
+    };
+    if(dv===ADMIN_DNI){ S.admin=true; S.adminData=null; S.adminMsg=null; S.adminErr=null; render(); window.scrollTo({top:0}); if(window._lookupDni) loadAdminData(); return; }
+    if(window._lookupDni){ (async()=>{ const p=await window._lookupDni(dv); if(!p||!p.nombre) return bad("No estás registrado. Contacta con quien administra el juego."); enterGame(p.nombre); })(); }
+    else { const sv=readSave(dv); if(sv) enterGame(sv.name); else bad("No estás registrado. Contacta con quien administra el juego."); }
+  };
   const fr=$("#fresh"); if(fr) fr.onclick=()=>{S.fresh=true; render();};
   const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
-  ["#nm","#dni"].forEach(id=>{const el=$(id); if(el) el.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};});
-  const dn=$("#dni"); if(dn) dn.oninput=()=>{dn.value=dn.value.replace(/\D/g,"").slice(0,8);};
+  const dn=$("#dni"); if(dn) dn.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};
+  if(dn) dn.oninput=()=>{dn.value=dn.value.replace(/\D/g,"").slice(0,8);};
+  const abx=$("#adminExit"); if(abx) abx.onclick=()=>{S.admin=false; S.adminData=null; S.adminMsg=null; S.adminErr=null; S.view="start"; render(); window.scrollTo({top:0});};
+  const arl=$("#adminReload"); if(arl) arl.onclick=()=>{ loadAdminData(); };
+  const aav=$("#adminAdd"); if(aav) aav.onclick=()=>{ adminAddOne(); };
+  const abl=$("#adminBulk"); if(abl) abl.onclick=()=>{ adminAddBulk(); };
   const bg=$("#begin"); if(bg) bg.onclick=()=>{S.qi=0; S.secLog=S.log.length; newCase(); S.view="play"; render(); window.scrollTo({top:0});};
   const sn=$("#secnow"); if(sn) sn.onclick=()=>{
     if(S.si<S.secs.length-1){S.si++; S.view="intro";}
@@ -656,6 +656,67 @@ function bind(){
   const ag=$("#again"); if(ag) ag.onclick=()=>{S.fresh=true; S.resume=null; S.view="start"; render(); window.scrollTo({top:0});};
   const sp=$("#spk"); if(sp) sp.onclick=()=>{const c=cur(); if(c.t==="haz") speak(QA[H[c.hid].t][0]+" ¿Qué haces? "+S.cs.opts.map(o=>o.t).join(". "));};
   if(S.view==="play"&&S.cs&&S.cs.scene&&S.cs.step==="q"){ const sc=SCENES[S.cs.scene]; const id=Object.keys(sc.hot).find(k=>sc.hot[k].ok); const f=document.querySelector('.hot[data-id="'+id+'"]'); if(f) f.classList.add("found"); }
+}
+/* ---- Admin: gestion de participantes ---- */
+function adminView(){
+  const list=(S.adminData||[]);
+  const rows=list.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${esc(r.dni)}</td><td>${r.completado?"<span class=\"ok\">Completado</span>":r.actualizado_en?"En progreso":"Sin iniciar"}</td><td>${r.puntos!=null?r.puntos:"-"}</td></tr>`).join("");
+  return `<div class="card"><div class="eyebrow">Administración</div><h1>Gestión de participantes</h1>
+  <p style="margin:0 0 16px">Agrega personas para que puedan ingresar al juego con su DNI.</p>
+  ${S.adminMsg?`<div class="save-note" style="color:var(--ok)">${esc(S.adminMsg)}</div>`:""}
+  ${S.adminErr?`<div class="fb no" role="alert">${esc(S.adminErr)}</div>`:""}
+  <h3>Agregar una persona</h3>
+  <div class="fld"><label for="anm">Nombre y apellido</label><input id="anm" type="text" maxlength="60" placeholder="Ej. Juan Pérez"></div>
+  <div class="fld"><label for="adni">DNI</label><input id="adni" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="8 dígitos"></div>
+  <div class="row"><button class="btn" id="adminAdd">Agregar</button></div>
+  <h3 style="margin-top:24px">Agregar varias (una por linea: DNI,Nombre)</h3>
+  <div class="fld"><textarea id="abulk" rows="6" placeholder="40667929,Juan Pérez&#10;12345678,María Gómez&#10;87654321,Pedro López" style="font-family:inherit;font-size:1rem;padding:10px;border:1px solid var(--line);border-radius:10px;width:100%"></textarea></div>
+  <div class="row"><button class="btn" id="adminBulk">Agregar lista</button></div>
+  <h3 style="margin-top:24px">Participantes registrados (${list.length})</h3>
+  ${list.length?`<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn alt" id="adminReload">Actualizar lista</button></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.9rem"><thead><tr style="text-align:left;color:var(--muted);border-bottom:2px solid var(--line)"><th style="padding:8px 6px">Nombre</th><th style="padding:8px 6px">DNI</th><th style="padding:8px 6px">Estado</th><th style="padding:8px 6px">Puntos</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<p style="color:var(--muted)">Aún no hay participantes. Agrega el primero arriba.</p><div class="row"><button class="btn alt" id="adminReload">Cargar lista</button></div>`}
+  <div class="row" style="margin-top:20px"><button class="btn alt" id="adminExit">Salir del panel</button></div></div>`;
+}
+async function loadAdminData(){
+  if(!window._lookupDni) return;
+  try{
+    const { supabase } = await import('./src/supabase.js');
+    const { data, error } = await supabase.rpc('listar_participantes');
+    if(error){ S.adminErr="No se pudo cargar la lista."; S.adminData=S.adminData||[]; render(); return; }
+    S.adminData=data||[]; S.adminErr=null; render();
+  }catch(e){ S.adminErr="Error de conexión."; render(); }
+}
+async function adminAddOne(){
+  const nm=($("#anm").value||"").trim(), dv=($("#adni").value||"").trim();
+  S.adminMsg=null; S.adminErr=null;
+  if(nv_check(nm,dv)) return;
+  try{
+    const { supabase } = await import('./src/supabase.js');
+    const { error } = await supabase.rpc('agregar_participante', { p_dni: dv, p_nombre: nm });
+    if(error){ S.adminErr="No se pudo agregar: "+error.message; render(); return; }
+    S.adminMsg=""+nm+" (DNI "+dv+") agregado correctamente."; $("#anm").value=""; $("#adni").value=""; loadAdminData();
+  }catch(e){ S.adminErr="Error de conexión."; render(); }
+  function nv_check(n,d){ if(n.length<5||!/\S+\s+\S+/.test(n)){ S.adminErr="Escribe nombre y apellido."; render(); return true; } if(!/^\d{8}$/.test(d)){ S.adminErr="Escribe un DNI de 8 números."; render(); return true; } return false; }
+}
+async function adminAddBulk(){
+  const raw=($("#abulk").value||"").trim();
+  S.adminMsg=null; S.adminErr=null;
+  if(!raw){ S.adminErr="Pega al menos una linea."; render(); return; }
+  const items=[];
+  for(const line of raw.split("\n")){
+    const t=line.trim(); if(!t) continue;
+    const sep=t.indexOf(",")>-1?",":t.indexOf(";")>-1?";":t.indexOf("\t")>-1?"\t":null;
+    if(!sep){ S.adminErr="Cada linea debe tener DNI y nombre separados por coma. Ej: 40667929,Juan Pérez"; render(); return; }
+    const dv=t.slice(0,sep).trim(), nm=t.slice(sep+1).trim();
+    if(!/^\d{8}$/.test(dv)||nm.length<3){ S.adminErr="Linea invalida: "+t; render(); return; }
+    items.push({dni:dv,nombre:nm});
+  }
+  if(!items.length){ S.adminErr="No se encontraron entradas validas."; render(); return; }
+  try{
+    const { supabase } = await import('./src/supabase.js');
+    const { data, error } = await supabase.rpc('agregar_participantes_lote', { p_lista: JSON.stringify(items) });
+    if(error){ S.adminErr="No se pudo agregar: "+error.message; render(); return; }
+    const r=data||{}; S.adminMsg=(r.agregados||0)+" participantes agregados."+(r.errores&&r.errores.length?" Errores: "+r.errores.join("; "):""); $("#abulk").value=""; loadAdminData();
+  }catch(e){ S.adminErr="Error de conexión."; render(); }
 }
 function tapHot(el){
   const cs=S.cs; if(!cs||cs.step!=="find") return;
