@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#E8F4FF">
+<meta name="description" content="Juego de seguridad: descubre los peligros de tu puesto de trabajo y practica cómo evitarlos.">
+<title>Detectives de Seguridad</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: un caso a la vez. Ilustración o pictograma arriba, escenario y 4 opciones debajo. Fase 1 transversal, elección de puesto, fase 2 específica, resultados. */
+:root{
+  --bg:#E8F5FF; --surface:#FFFFFF; --ink:#1B2A5B; --muted:#4A5B8C; --line:#C9DAF2;
+  --go:#1E9E6A; --go-ink:#FFFFFF; --coral:#F2563F; --sun:#FFC845; --star-off:#C9D3E8; --track:#D3E1F5;
+  --ok-bg:#D8F5E5; --ok-fg:#0B6B41; --no-bg:#FFE4DF; --no-fg:#A32B18; --focus:#1B2A5B;
+  --in-bg:#FDE1DD; --in-fg:#9B1C12; --im-bg:#FEEBCB; --im-fg:#7A3D00; --mo-bg:#DDEBFF; --mo-fg:#134B9E; --tr-bg:#E6EAF0; --tr-fg:#44546A;
+  --mis-bg:#1B2A5B; --mis-fg:#FFFFFF;
+  --font:"Fredoka","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1A33; --surface:#17274C; --ink:#F1F5FF; --muted:#B6C4E6; --line:#2C4170; --track:#26396A;
+  --go:#3CC88D; --go-ink:#04281A; --coral:#FF8A78; --sun:#FFD25E; --star-off:#41557F;
+  --ok-bg:#12432E; --ok-fg:#9BEBC1; --no-bg:#4B2019; --no-fg:#FFB9AD; --focus:#FFD25E;
+  --in-bg:#4A1712; --in-fg:#FFB4AC; --im-bg:#4A2D07; --im-fg:#FFD08A; --mo-bg:#14325F; --mo-fg:#A9CCFF; --tr-bg:#243248; --tr-fg:#B5C2D4; --mis-bg:#2F55B5; --mis-fg:#FFFFFF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1A33; --surface:#17274C; --ink:#F1F5FF; --muted:#B6C4E6; --line:#2C4170; --track:#26396A;
+  --go:#3CC88D; --go-ink:#04281A; --coral:#FF8A78; --sun:#FFD25E; --star-off:#41557F;
+  --ok-bg:#12432E; --ok-fg:#9BEBC1; --no-bg:#4B2019; --no-fg:#FFB9AD; --focus:#FFD25E;
+  --in-bg:#4A1712; --in-fg:#FFB4AC; --im-bg:#4A2D07; --im-fg:#FFD08A; --mo-bg:#14325F; --mo-fg:#A9CCFF; --tr-bg:#243248; --tr-fg:#B5C2D4; --mis-bg:#2F55B5; --mis-fg:#FFFFFF; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+:focus-visible{outline:4px solid var(--focus);outline-offset:3px;border-radius:10px}
+.wrap{max-width:780px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 8px}
+.logo{font-weight:700;font-size:1.15rem;display:flex;align-items:center;gap:8px}
+.logo svg{width:34px;height:34px;flex:none}
+.stars{font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;padding:4px 14px;border:2px solid var(--line)}
+.stars svg{width:22px;height:22px}
+.prog{padding-block:2px 14px}
+.prog-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.92rem;color:var(--muted);font-weight:500;margin-bottom:6px}
+.track{height:12px;border-radius:99px;background:var(--track);overflow:hidden}
+.track i{display:block;height:100%;background:var(--go);border-radius:99px;transition:width .3s}
+h1{font-size:clamp(2.1rem,7vw,3rem);line-height:1.05;margin:0 0 12px;font-weight:700}
+h2{font-size:1.5rem;line-height:1.2;margin:0 0 8px;font-weight:700}
+h3{font-size:1.15rem;margin:0 0 6px;font-weight:600}
+p{margin:0 0 12px}
+.card{background:var(--surface);border:3px solid var(--line);border-radius:26px;padding:20px}
+.eyebrow{font-size:.85rem;letter-spacing:.07em;text-transform:uppercase;font-weight:600;color:var(--muted);margin-bottom:6px}
+.scene{border-radius:22px;overflow:hidden;border:3px solid var(--line);background:var(--surface);line-height:0}
+.scene svg{width:100%;height:auto;display:block;touch-action:manipulation}
+.scene.small svg{max-height:210px}
+.hot{cursor:pointer;outline:none}
+.hot .hit{fill:transparent;stroke:transparent;stroke-width:5;stroke-dasharray:10 7}
+.hot:hover .hit{fill:rgba(255,255,255,.28);stroke:#fff}
+.hot:focus-visible .hit{stroke:#1B2A5B}
+.found .hit{fill:rgba(242,86,63,.15);stroke:#F2563F;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{stroke-width:9}}
+.shake{animation:shake .5s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ask{margin-top:16px}
+.ask .scen{font-size:1.15rem;font-weight:500}
+.btn{font:inherit;font-weight:700;font-size:1.1rem;border:0;border-radius:18px;padding:13px 22px;cursor:pointer;background:var(--go);color:var(--go-ink);min-height:54px;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.btn.alt{background:var(--surface);color:var(--ink);border:3px solid var(--line);box-shadow:none}
+.btn.round{min-height:48px;width:48px;padding:0;border-radius:50%;flex:none;display:grid;place-items:center;float:right;margin-left:10px}
+.btn.round svg{width:24px;height:24px}
+.opts{display:grid;gap:10px;margin-top:14px}
+.opt{font:inherit;font-weight:500;font-size:1.05rem;text-align:left;border:3px solid var(--line);background:var(--surface);color:var(--ink);border-radius:18px;padding:14px 16px;cursor:pointer;min-height:58px}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt.good{background:var(--ok-bg);border-color:var(--ok-fg);color:var(--ok-fg)}
+.opt.bad{background:var(--no-bg);border-color:var(--no-fg);color:var(--no-fg)}
+.opt:disabled{cursor:default}
+.fb{margin-top:14px;border-radius:18px;padding:14px 18px;font-weight:500}
+.fb.ok{background:var(--ok-bg);color:var(--ok-fg)} .fb.no{background:var(--no-bg);color:var(--no-fg)}
+.fb b{display:block;font-size:1.2rem}
+.learn{margin-top:12px;background:var(--surface);border:3px dashed var(--line);border-radius:18px;padding:14px 16px}
+.learn ul{margin:6px 0 0;padding-left:20px;display:grid;gap:3px}
+.learn .q{margin-bottom:8px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:.9rem;color:var(--muted)}
+.pill{display:inline-flex;font-size:.82rem;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.pill.IN{background:var(--in-bg);color:var(--in-fg)} .pill.IM{background:var(--im-bg);color:var(--im-fg)} .pill.MO{background:var(--mo-bg);color:var(--mo-fg)} .pill.TO,.pill.TR{background:var(--tr-bg);color:var(--tr-fg)}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+input[type=text]{font:inherit;font-size:1.2rem;padding:13px 16px;border-radius:16px;border:3px solid var(--line);background:var(--surface);color:var(--ink);width:100%;max-width:420px}
+label{font-weight:600;display:block;margin-bottom:6px}
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:18px 0}
+.ph{background:var(--bg);border-radius:18px;padding:14px 16px}
+.ph b{display:block;font-size:2rem;line-height:1;color:var(--go)}
+.ph span{font-size:.95rem;color:var(--muted)}
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:10px;margin-top:14px}
+.pk{font:inherit;text-align:left;border:3px solid var(--line);background:var(--surface);color:var(--ink);border-radius:18px;padding:12px 16px;cursor:pointer;min-height:64px}
+.pk:hover{border-color:var(--ink)}
+.pk b{display:block;font-weight:600}
+.pk span{font-size:.88rem;color:var(--muted)}
+.score{font-size:3.4rem;font-weight:700;line-height:1;color:var(--go)}
+.bars{display:grid;gap:10px;margin-top:12px}
+.bar{display:grid;grid-template-columns:minmax(110px,170px) 1fr auto;gap:10px;align-items:center;font-size:.95rem}
+.bar .tr{height:14px;border-radius:99px;background:var(--track);overflow:hidden}
+.bar .tr i{display:block;height:100%;background:var(--go)}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px}
+.kp div{background:var(--bg);border-radius:16px;padding:10px 14px}
+.kp b{display:block;font-size:1.7rem;line-height:1.1}
+.kp span{font-size:.85rem;color:var(--muted)}
+details{margin-top:10px;font-size:1rem;color:var(--muted)}
+details summary{cursor:pointer;font-weight:600;color:var(--ink)}
+details ul{margin:8px 0 0;padding-left:20px}
+.hl{display:grid;gap:8px;margin-top:12px}
+.hl>div{background:var(--bg);border-radius:16px;padding:10px 14px}
+.hl .t{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:600}
+@media (prefers-reduced-motion:reduce){.found .hit,.shake{animation:none}.track i{transition:none}}
+
+.hr{display:flex;gap:8px;align-items:center}
+.snd{width:42px;height:42px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
+.snd svg{width:22px;height:22px}
+.mission{display:flex;gap:14px;align-items:center;background:var(--mis-bg);color:var(--mis-fg);border-radius:20px;padding:14px 18px;margin:0 0 14px;box-shadow:0 6px 0 rgba(0,0,0,.14);animation:pop .5s}
+.mission .mi{flex:none;width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.18);display:grid;place-items:center}
+.mission .mi svg{width:26px;height:26px}
+.mission small{display:block;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;font-weight:600;opacity:.88}
+.mission b{display:block;font-size:1.3rem;line-height:1.25;font-weight:600}
+@keyframes pop{0%{transform:scale(.97);opacity:.4}100%{transform:none;opacity:1}}
+.situ{background:var(--surface);border:3px solid var(--line);border-radius:20px;padding:14px 18px;margin:14px 0;overflow:hidden}
+.situ .scen{font-size:1.15rem;font-weight:500;margin:0}
+.situ .eyebrow{margin-bottom:4px}
+.opts{margin-top:0}
+.modal-bg{position:fixed;inset:0;z-index:50;background:rgba(8,16,36,.6);display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal{position:relative;background:var(--surface);color:var(--ink);border-radius:26px;border:3px solid var(--line);padding:22px;max-width:560px;width:100%;max-height:100%;overflow:auto;animation:pop .3s;line-height:1.45}
+.modal .mok{font-size:1.4rem;font-weight:700;color:var(--ok-fg);background:var(--ok-bg);display:inline-block;padding:4px 14px;border-radius:14px;margin:0 52px 12px 0}
+.mx{position:absolute;top:12px;right:12px;width:42px;height:42px;border-radius:50%;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:1.6rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.path{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
+.path li{display:flex;gap:12px;align-items:center;padding:8px 12px;border-radius:14px;background:var(--bg);opacity:.75;border:3px solid transparent}
+.path li.cur{opacity:1;border-color:var(--go);background:var(--surface)}
+.path li.done{opacity:1}
+.path .dot{flex:none;width:30px;height:30px;border-radius:50%;background:var(--track);display:grid;place-items:center;font-weight:700;font-size:.9rem}
+.path li.done .dot{background:var(--go);color:var(--go-ink)}
+.path li.cur .dot{background:var(--ink);color:var(--surface)}
+.path b{display:block;font-weight:600}
+.path li span:not(.dot){font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.mission,.modal{animation:none}}
+
+.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.himg{flex:0 0 150px;width:150px;aspect-ratio:1;border-radius:24px;display:grid;place-items:center;border:3px solid var(--line)}
+.himg svg{width:82%;height:auto}
+.htx{flex:1 1 260px;min-width:0}
+.htx p{margin-bottom:14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tl{position:relative;background:var(--surface);border:3px solid var(--line);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.tl .img{aspect-ratio:4/3;display:grid;place-items:center}
+.tl .img svg{width:58%;height:auto;max-height:86%}
+.tl .tx{padding:10px 12px 12px}
+.tl b{display:block;font-size:.98rem;line-height:1.2;font-weight:600}
+.tl small{color:var(--muted);font-size:.85rem}
+.tl.cur{border-color:var(--go)}
+.tl:not(.cur):not(.done){opacity:.78}
+.tl .st{position:absolute;top:8px;right:8px;min-width:30px;height:30px;padding:0 9px;border-radius:99px;display:grid;place-items:center;font-weight:700;font-size:.85rem;background:var(--surface);color:var(--ink);border:2px solid var(--line)}
+.tl .st.ok{background:var(--go);color:var(--go-ink);border-color:var(--go)}
+.tl .st.now{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+
+.navrow{display:flex;justify-content:space-between;gap:10px;margin:0 0 14px}
+.nv{font:inherit;font-weight:600;font-size:.95rem;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:42px}
+.nv svg{width:18px;height:18px}
+.nv:hover{border-color:var(--ink)}
+.btn.phase{background:var(--mis-bg);color:var(--mis-fg);font-size:1.15rem;padding:15px 24px}
+.phasecard{margin-top:16px;border-radius:26px;padding:22px;background:var(--mis-bg);color:var(--mis-fg);box-shadow:0 8px 0 rgba(0,0,0,.14)}
+.phasecard h2{margin-bottom:6px}
+.phasecard p{opacity:.95}
+.phasecard .ptag{display:inline-block;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;font-weight:700;background:var(--sun);color:#1B2A5B;padding:4px 12px;border-radius:99px;margin-bottom:10px}
+.phasecard .btn.phase{background:var(--go);color:var(--go-ink)}
+.tl.p2{border-style:dashed;border-color:var(--mis-bg);opacity:1}
+.tl .st.f2{background:var(--mis-bg);color:var(--mis-fg);border-color:var(--mis-bg)}
+.scale{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.scale .arr{color:var(--muted);font-weight:700}
+.scale .sc-note{flex-basis:100%;font-size:.85rem;color:var(--muted)}
+.pill{font-size:.9rem;padding:4px 12px}
+.opts.duel{grid-template-columns:1fr 1fr}
+.opts.duel .opt{display:flex;flex-direction:column;gap:8px;min-height:120px;justify-content:center;text-align:center;align-items:center;font-size:1.2rem;font-weight:600}
+.ltr{width:36px;height:36px;border-radius:50%;background:var(--track);display:grid;place-items:center;font-weight:700}
+.vsr{display:grid;gap:8px;margin:10px 0}
+.vsr>div{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;background:var(--bg);border-radius:14px;padding:10px 14px}
+@media (max-width:480px){.scale{gap:4px}.scale .pill{font-size:.76rem;padding:3px 7px}.modal{padding:20px 18px 26px}.modal .btn{margin-bottom:4px}.opts.duel{grid-template-columns:1fr}.opts.duel .opt{min-height:80px;flex-direction:row;text-align:left}}
+
+.lead{font-size:1.2rem;color:var(--muted);margin:0 0 18px}
+.how{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 20px}
+.how>div{background:var(--bg);border-radius:20px;padding:14px 8px;text-align:center}
+.how .hi{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--mis-bg);color:var(--mis-fg);margin:0 auto 8px}
+.how .hi svg{width:28px;height:28px}
+.how b{display:block;font-size:1.05rem;line-height:1.1}
+.how small{display:block;color:var(--muted);font-size:.9rem}
+.fld{margin:10px 0}.fld label{display:block;font-weight:700;margin-bottom:6px}.ferr{color:var(--in-fg);background:var(--in-bg);font-weight:700;padding:8px 14px;border-radius:12px;margin:8px 0}.dnil{color:var(--muted);font-size:.9rem;margin-top:2px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="logo"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1B2A5B"/><path d="M8 23a12 12 0 0 1 24 0z" fill="#FFC845"/><rect x="6" y="23" width="28" height="4" rx="2" fill="#FFC845"/><rect x="18" y="9" width="4" height="9" rx="2" fill="#F2563F"/><circle cx="20" cy="30" r="4" fill="#fff"/></svg>Detectives de seguridad</div>
+  <div class="hr"><button class="snd" id="snd" aria-pressed="true" aria-label="Sonido activado"></button><div class="stars" id="starsbox" aria-live="polite"></div></div>
+</header>
+<div class="prog" id="prog" hidden><div class="prog-top"><span id="plabel"></span><span id="pcount"></span></div><div class="track" aria-hidden="true"><i id="pfill"></i></div></div>
+<div class="navrow" id="navrow" hidden><button class="nv" id="back" type="button"><span aria-hidden="true">←</span> Atrás</button><button class="nv" id="home" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Inicio</button></div>
+<main id="main" tabindex="-1"></main>
+</div>
+
+<script>
+const DATA = {"H": [{"id": 0, "step": "oficina", "act": "Oficina", "t": "Piso mojado", "q": "Caída al mismo nivel, golpes y contusiones.", "tips": ["Mira por dónde caminas y respeta la señal de piso mojado.", "Mantén pasillos y puestos ordenados y secos.", "Avisa de inmediato si ves un derrame."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 1, "step": "oficina", "act": "Oficina", "t": "Golpes con el mobiliario", "q": "Golpes y contusiones contra sillas, escritorios y cajoneras.", "tips": ["Deja cajones y puertas de muebles cerrados.", "Acomoda la silla al levantarte.", "Mantén el espacio de tu puesto despejado."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 2, "step": "oficina", "act": "Oficina", "t": "Escaleras", "q": "Caída a distinto nivel con golpes, contusiones o fracturas.", "tips": ["Usa los tres apoyos: pie, pie y pasamanos.", "No bajes con el celular en la mano ni cargando bultos que tapen la vista.", "Baja un escalón a la vez."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 3, "step": "oficina", "act": "Oficina", "t": "Archivadores", "q": "Golpes en ojos, cara o cabeza al sacar carpetas con descuido.", "tips": ["Abre un solo cajón a la vez y ciérralo al terminar.", "Saca las carpetas con control, sin tirones.", "Ordena lo pesado en los cajones de abajo."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 4, "step": "oficina", "act": "Oficina", "t": "Conexiones eléctricas", "q": "Contacto con electricidad que puede causar electrocución.", "tips": ["No pises ni mojes el piso cerca de tomacorrientes o transformadores.", "Mantén los alargadores fuera del paso y del contacto con personas.", "Reporta cables pelados o enchufes sueltos."], "lvl": "IN", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 5, "step": "oficina", "act": "Oficina", "t": "Presión de entrega", "q": "Estrés por plazos y carga de trabajo.", "tips": ["Prioriza tareas y avisa a tiempo cuando un plazo no es realista.", "Haz pausas en la jornada.", "Habla con tu jefatura si la carga se mantiene alta."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 6, "step": "oficina", "act": "Oficina", "t": "Iluminación insuficiente", "q": "Fatiga visual y disminución de la agudeza visual.", "tips": ["No trabajes con luz baja; pide revisar luminarias.", "Cumple tu examen periódico de agudeza visual.", "Evita reflejos en la pantalla."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 7, "step": "oficina", "act": "Oficina", "t": "Postura forzada frente al PC", "q": "Dolor y lesiones en muñecas, cuello y espalda.", "tips": ["Ajusta silla, teclado y monitor a tu altura.", "Apoya la espalda y mantén los pies en el piso.", "Haz las pausas activas."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 8, "step": "oficina", "act": "Oficina", "t": "Radiación de pantallas", "q": "Efectos en el sistema nervioso y trastornos del sueño.", "tips": ["Mantén una distancia adecuada de la pantalla.", "Usa pantallas de baja radiación.", "Desconéctate de los equipos al terminar la jornada."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 9, "step": "oficina", "act": "Oficina", "t": "Movimientos repetitivos", "q": "Tendinitis y síndrome del túnel carpiano.", "tips": ["Usa mouse y teclado ergonómicos.", "Descansa las manos y estira con regularidad.", "Alterna tareas para no repetir el mismo gesto por horas."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 10, "step": "oficina", "act": "Oficina", "t": "Pantalla demasiado cerca", "q": "Dolor ocular, irritación y fatiga visual.", "tips": ["Mantén una distancia cómoda entre ojos y pantalla.", "Descansa la vista cada cierto tiempo mirando a lo lejos.", "Parpadea con frecuencia."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 11, "step": "oficina", "act": "Oficina", "t": "Sismo", "q": "Caídas, golpes y contusiones; en el peor caso, muerte.", "tips": ["Conoce tu ruta de evacuación y tu zona segura.", "Evacúa cuando suene la alarma, sin regresar por pertenencias.", "Participa en los simulacros."], "lvl": "IN", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 12, "step": "oficina", "act": "Oficina", "t": "Incendio", "q": "Quemaduras, asfixia y muerte.", "tips": ["Ubica extintores y salidas de emergencia.", "Evacúa de inmediato al sonar la alarma.", "Participa en los simulacros en distintos horarios."], "lvl": "IN", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 13, "step": "tele", "act": "Teletrabajo", "t": "Ergonomía en casa", "q": "Dolores de espalda y lesiones por esfuerzo repetitivo.", "tips": ["Arma un espacio de trabajo con silla ajustable.", "Mantén una postura adecuada.", "Haz pausas durante el día."], "lvl": "MO", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 14, "step": "tele", "act": "Teletrabajo", "t": "Aislamiento", "q": "Estrés, ansiedad y sensación de soledad.", "tips": ["Mantén comunicación regular con colegas y jefatura.", "Participa en las actividades virtuales del equipo.", "Pide apoyo si te sientes desbordado."], "lvl": "MO", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 15, "step": "tele", "act": "Teletrabajo", "t": "Sedentarismo", "q": "Sobrepeso y enfermedades crónicas.", "tips": ["Haz pausas activas durante el día.", "Establece una rutina de actividad física.", "Levántate al menos una vez por hora."], "lvl": "MO", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 16, "step": "tele", "act": "Teletrabajo", "t": "Incendio y electricidad en casa", "q": "Daños a la propiedad, lesiones y quemaduras.", "tips": ["Ten un extintor y detectores de humo.", "Usa cables y equipos en buen estado.", "No sobrecargues enchufes y usa regletas con protección."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 17, "step": "oficina", "act": "Kitchenette", "t": "Electrocución en la kitchenette", "q": "Paro cardíaco y quemaduras por choque eléctrico.", "tips": ["No uses enchufes ni cables dañados.", "No sobrecargues los tomacorrientes.", "Aleja los cables del agua y de fuentes de calor."], "lvl": "IN", "n": 16, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}, {"id": 18, "step": "oficina", "act": "Kitchenette", "t": "Intoxicación alimentaria", "q": "Náuseas, vómitos y diarrea.", "tips": ["Lávate las manos antes de manipular alimentos.", "Limpia superficies y utensilios.", "Guarda los alimentos refrigerados y retira lo vencido."], "lvl": "IM", "n": 16, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}, {"id": 19, "step": "oficina", "act": "Kitchenette", "t": "Resbalones en la kitchenette", "q": "Esguinces y huesos rotos.", "tips": ["Seca de inmediato lo que se derrame.", "Usa los tapetes antideslizantes.", "Mantén los cables fuera del paso."], "lvl": "IM", "n": 16, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}, {"id": 20, "step": "oficina", "act": "Kitchenette", "t": "Quemaduras", "q": "Dolor y cicatrices por contacto con superficies calientes.", "tips": ["Usa agarraderas o guantes con objetos calientes.", "Ajusta bien la temperatura de los equipos.", "No dejes hervidores ni hornos sin atención."], "lvl": "IM", "n": 16, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}, {"id": 21, "step": "traslado", "act": "En la ciudad", "t": "Accidentes de tránsito en la ciudad", "q": "Heridas y muerte.", "tips": ["Usa empresas y conductores formales o autorizados.", "Usa siempre el cinturón de seguridad.", "Respeta las normas de tránsito."], "lvl": "IN", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 22, "step": "traslado", "act": "En la ciudad", "t": "Atropellos", "q": "Fracturas, heridas y muerte.", "tips": ["Cruza por los lugares designados.", "Respeta las señales y presta atención al entorno.", "Usa los pasos peatonales."], "lvl": "IN", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 23, "step": "traslado", "act": "En la ciudad", "t": "Robos y asaltos", "q": "Pérdida de pertenencias y lesiones físicas.", "tips": ["Evita zonas peligrosas, solitarias o mal iluminadas.", "Mantén los objetos de valor fuera de la vista.", "Cierra las puertas del vehículo con seguro."], "lvl": "IN", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 24, "step": "traslado", "act": "Entre ciudades", "t": "Accidentes en carretera", "q": "Heridas y muerte.", "tips": ["Viaja solo con empresas y conductores formales o autorizados.", "Usa el cinturón de seguridad.", "Cumple las normas de tránsito."], "lvl": "IN", "n": 11, "puestos": [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 25, "step": "traslado", "act": "Entre ciudades", "t": "Atropellos en ruta", "q": "Fracturas, heridas y muerte.", "tips": ["Cruza por los lugares designados.", "Respeta las señales.", "Presta atención al entorno en paraderos y terminales."], "lvl": "IN", "n": 11, "puestos": [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 26, "step": "traslado", "act": "Entre ciudades", "t": "Robos y asaltos en ruta", "q": "Pérdida de pertenencias y lesiones físicas.", "tips": ["Evita áreas peligrosas y transitar de noche por lugares solitarios.", "Guarda tus objetos de valor.", "Cierra las puertas con seguro."], "lvl": "IN", "n": 11, "puestos": [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 27, "step": "traslado", "act": "Entre ciudades", "t": "Manifestaciones y protestas", "q": "Violencia, disturbios y vandalismo.", "tips": ["Aléjate de los enfrentamientos.", "Busca vías alternativas para evitar la zona.", "Infórmate de la ruta antes de salir."], "lvl": "IM", "n": 11, "puestos": [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 28, "step": "traslado", "act": "Entre ciudades", "t": "Gases lacrimógenos", "q": "Dificultad para respirar e irritación en los ojos.", "tips": ["Mantén cerradas las ventanas del vehículo.", "Usa la ventilación interna del vehículo.", "Aléjate de la zona de disturbios."], "lvl": "IM", "n": 11, "puestos": [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 29, "step": "traslado", "act": "Entre ciudades", "t": "Estrés ante una manifestación", "q": "Angustia y sensación de inseguridad.", "tips": ["Mantén la calma.", "Ten un plan de acción para estas situaciones.", "Conoce el plan de acción de tu organización."], "lvl": "IM", "n": 11, "puestos": [0, 2, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 30, "step": "traslado", "act": "Viaje aéreo", "t": "Presión en los oídos", "q": "Dolor y disminución de la audición.", "tips": ["Bosteza o chupa un caramelo en el despegue y el aterrizaje.", "Si lo necesitas, usa tapones para los oídos.", "Evita volar con las vías respiratorias congestionadas."], "lvl": "MO", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 31, "step": "traslado", "act": "Viaje aéreo", "t": "Accidente de aviación", "q": "Lesiones graves y muerte.", "tips": ["Cumple las normas de seguridad de la aerolínea.", "Sigue las instrucciones del personal de vuelo.", "Ubica la salida de emergencia más cercana al sentarte."], "lvl": "IN", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 32, "step": "traslado", "act": "Viaje aéreo", "t": "Turbulencia", "q": "Caídas y fracturas dentro de la cabina.", "tips": ["Mantén el cinturón abrochado durante el vuelo.", "Sigue las indicaciones del personal de vuelo.", "No te pares cuando se encienda la señal del cinturón."], "lvl": "IM", "n": 15, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]}, {"id": 33, "step": "oficina", "act": "Contacto con personas", "t": "COVID-19", "q": "Fatiga persistente y dificultad para respirar.", "tips": ["Mantén los lugares de trabajo ventilados.", "Reporta a tu jefatura si presentas síntomas.", "Sigue el plan de vigilancia, prevención y control vigente."], "lvl": "IM", "n": 16, "puestos": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}, {"id": 34, "step": "muelles", "act": "Muelles", "t": "Resbalones en el muelle", "q": "Esguinces y huesos rotos.", "tips": ["Usa calzado antideslizante.", "Apóyate en las barandas de seguridad.", "Conoce los riesgos de las instalaciones antes de recorrerlas."], "lvl": "IN", "n": 9, "puestos": [2, 6, 7, 8, 9, 10, 11, 13, 15]}, {"id": 35, "step": "muelles", "act": "Muelles", "t": "Ahogamiento", "q": "Muerte por inmersión.", "tips": ["Mantén una distancia segura del borde del muelle.", "Usa chaleco salvavidas en las áreas peligrosas.", "Sigue las normas de seguridad del lugar."], "lvl": "IN", "n": 9, "puestos": [2, 6, 7, 8, 9, 10, 11, 13, 15]}, {"id": 36, "step": "muelles", "act": "Muelles", "t": "Clima adverso", "q": "Lesiones por caídas y enfermedades relacionadas con el frío.", "tips": ["Revisa el pronóstico y las advertencias meteorológicas.", "Usa ropa adecuada para el clima.", "Identifica un refugio o zona de resguardo."], "lvl": "IM", "n": 9, "puestos": [2, 6, 7, 8, 9, 10, 11, 13, 15]}, {"id": 37, "step": "muelles", "act": "Muelles", "t": "Radiación solar", "q": "Daño ocular y envejecimiento prematuro de la piel.", "tips": ["Usa protector solar y reaplícalo.", "Usa lentes y sombrero.", "Evita la exposición en las horas de mayor radiación."], "lvl": "IM", "n": 9, "puestos": [2, 6, 7, 8, 9, 10, 11, 13, 15]}, {"id": 38, "step": "especificos", "act": "Espacios públicos", "t": "Radiación solar en espacios públicos", "q": "Daño ocular y envejecimiento prematuro de la piel.", "tips": ["Usa protector solar.", "Hidrátate durante la jornada.", "Aprovecha la sombra en las pausas."], "lvl": "IM", "n": 1, "puestos": [9]}, {"id": 39, "step": "especificos", "act": "Espacios públicos", "t": "Robos y asaltos en la actividad", "q": "Pérdida de pertenencias y lesiones físicas.", "tips": ["Evita áreas peligrosas y lugares solitarios o mal iluminados.", "Gestiona la presencia de la autoridad local.", "Mantén los objetos de valor fuera de la vista."], "lvl": "IN", "n": 1, "puestos": [9]}, {"id": 40, "step": "especificos", "act": "Espacios públicos", "t": "Intoxicación alimentaria en campo", "q": "Náuseas, vómitos y diarrea.", "tips": ["Lávate las manos antes de comer.", "Consume alimentos de proveedores formales.", "Lava y desinfecta utensilios y superficies."], "lvl": "IM", "n": 1, "puestos": [9]}, {"id": 41, "step": "especificos", "act": "Espacios públicos", "t": "Objetos punzocortantes", "q": "Heridas por cortes y punción.", "tips": ["Recoge con pinzas o tenazas, no con la mano.", "Separa los residuos en contenedores rígidos rotulados.", "Usa guantes resistentes a cortes y calzado cerrado con suela reforzada."], "lvl": "IM", "n": 1, "puestos": [9]}, {"id": 42, "step": "especificos", "act": "Limpieza", "t": "Productos químicos", "q": "Dermatitis y dificultades respiratorias.", "tips": ["Lee las etiquetas y sigue las instrucciones.", "Ventila el área y almacena los productos de forma segura.", "Usa guantes y mascarilla."], "lvl": "IM", "n": 1, "puestos": [14]}, {"id": 43, "step": "especificos", "act": "Limpieza", "t": "Caídas y resbalones al limpiar", "q": "Fracturas, esguinces y contusiones.", "tips": ["Señaliza el piso mojado.", "Usa calzado antideslizante.", "Asegura la escalera antes de subir."], "lvl": "IM", "n": 1, "puestos": [14]}, {"id": 44, "step": "especificos", "act": "Limpieza", "t": "Cortes y pinchazos", "q": "Heridas e infecciones.", "tips": ["Usa herramientas para manipular objetos filosos.", "Desecha los punzocortantes en el recipiente correcto.", "Usa guantes resistentes a cortes."], "lvl": "IM", "n": 1, "puestos": [14]}, {"id": 45, "step": "especificos", "act": "Limpieza", "t": "Sobreesfuerzo y posturas", "q": "Dolores musculares y lesiones de espalda y articulaciones.", "tips": ["Levanta cargas con técnica segura.", "Pide ayuda con objetos pesados o incómodos.", "Alterna posturas y haz pausas."], "lvl": "IM", "n": 1, "puestos": [14]}, {"id": 46, "step": "especificos", "act": "Limpieza", "t": "Contaminación biológica", "q": "Infecciones y contagio de enfermedades.", "tips": ["Sigue los procedimientos de higiene.", "Usa desinfectantes efectivos.", "Usa guantes frente a fluidos o superficies contaminadas."], "lvl": "IM", "n": 1, "puestos": [14]}, {"id": 47, "step": "especificos", "act": "Limpieza", "t": "Polvo y alérgenos", "q": "Rinitis, alergias respiratorias y asma.", "tips": ["Prefiere la limpieza en seco que no levante polvo.", "Mantén buena ventilación.", "Usa mascarilla o respirador adecuado."], "lvl": "IM", "n": 1, "puestos": [14]}, {"id": 48, "step": "especificos", "act": "Limpieza", "t": "Limpieza en solitario", "q": "Demora en el auxilio que agrava una lesión.", "tips": ["Cumple el protocolo de confirmaciones intermedias.", "Mantén tu ficha médica actualizada.", "Conoce las señales de alarma y cómo pedir ayuda."], "lvl": "IN", "n": 1, "puestos": [14]}], "P": [{"name": "Abogada de la Dirección de Políticas", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Asistente Administrativa y Contable", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Asistente de ciencias marinas y costeras", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "TR", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Asistente Ejecutiva", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Contadora", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Directora de Administración y Finanzas", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Director de Ciencias", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Director de Comunicaciones", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Director de Pesquería", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Especialista en Activismo Ambiental y Digital", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "TR", "MO"], [14, "TR", "MO"], [15, "TR", "MO"], [16, "TR", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [38, "IM", "MO"], [39, "IN", "MO"], [40, "IM", "TO"], [41, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Especialista en Estrategia y Comunicación Digital", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Especialista Multimedia", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Especialista en Promoción de Políticas", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Gerente de Comunicaciones y Relaciones Públicas", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Personal de Limpieza", "items": [[42, "IM", "MO"], [43, "IM", "MO"], [44, "IM", "MO"], [45, "IM", "MO"], [46, "IM", "MO"], [47, "IM", "MO"], [48, "IN", "MO"], [17, "IN", "IM"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [33, "IM", "TO"]]}, {"name": "Vicepresidente Adjunto", "items": [[0, "IM", "MO"], [1, "IM", "MO"], [2, "IM", "MO"], [3, "IM", "MO"], [4, "IN", "MO"], [5, "IM", "MO"], [6, "IM", "MO"], [7, "IM", "MO"], [8, "IM", "MO"], [9, "IM", "MO"], [10, "IM", "MO"], [11, "IN", "MO"], [12, "IN", "MO"], [13, "MO", "MO"], [14, "MO", "MO"], [15, "MO", "MO"], [16, "IM", "MO"], [17, "IN", "MO"], [18, "IM", "TO"], [19, "IM", "TO"], [20, "IM", "TO"], [34, "IN", "MO"], [35, "IN", "MO"], [36, "IM", "MO"], [37, "IM", "MO"], [21, "IN", "MO"], [22, "IN", "MO"], [23, "IN", "MO"], [24, "IN", "MO"], [25, "IN", "MO"], [26, "IN", "MO"], [27, "IM", "TO"], [28, "IM", "TO"], [29, "IM", "TO"], [30, "MO", "TR"], [31, "IN", "MO"], [32, "IM", "TO"], [33, "IM", "TO"]]}]};
+const H = DATA.H, P = DATA.P, NP = P.length;
+const LVL = {IN:"Intolerable (I)", IM:"Importante (II)", MO:"Moderado (III)", TO:"Tolerable (IV)", TR:"Trivial (V)"};
+const RANK = {IN:0,IM:1,MO:2,TO:3,TR:4};
+const STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" fill="#FFC845" stroke="#C99200" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+const SPK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const hot=(id,x,y,w,h,label,inner)=>`<g class="hot" data-id="${id}" tabindex="0" role="button" aria-label="${label}">${inner}<rect class="hit" x="${x}" y="${y}" width="${w}" height="${h}" rx="16"/></g>`;
+
+/* Escenas con zonas tocables (8 peligros) */
+const SCENES={
+pasillo:{prompt:"Inspecciona el pasillo. Toca el peligro.",
+  hot:{puerta:{fb:"La puerta no es el peligro. Sigue inspeccionando."},planta:{fb:"La planta no representa un riesgo aquí. Sigue buscando."},charco:{ok:true}},
+  svg:()=>`<rect width="600" height="340" fill="#E3EEFB"/><rect y="235" width="600" height="105" fill="#BCCBE0"/><rect y="228" width="600" height="10" fill="#A9BAD2"/>
+  ${hot("puerta",40,70,110,165,"puerta",`<rect x="40" y="70" width="110" height="165" rx="8" fill="#B9794B"/><rect x="56" y="86" width="78" height="60" rx="6" fill="#A5663B"/><circle cx="130" cy="165" r="7" fill="#F3C74A"/>`)}
+  ${hot("planta",450,115,110,130,"planta",`<rect x="470" y="195" width="62" height="46" rx="8" fill="#D2693F"/><ellipse cx="501" cy="165" rx="24" ry="42" fill="#3E9B5F"/><ellipse cx="478" cy="182" rx="15" ry="30" fill="#4DB171" transform="rotate(-25 478 182)"/><ellipse cx="526" cy="182" rx="15" ry="30" fill="#4DB171" transform="rotate(25 526 182)"/>`)}
+  ${hot("charco",185,252,250,70,"zona del piso",`<ellipse cx="310" cy="288" rx="122" ry="30" fill="#5DB8EC"/><ellipse cx="275" cy="279" rx="42" ry="8" fill="#A8DDF7"/><path d="M360 296q18 6 36 0" stroke="#A8DDF7" stroke-width="4" fill="none" stroke-linecap="round"/>`)}`},
+escalera:{prompt:"Inspecciona la escalera. Toca a quien está más expuesto.",
+  hot:{rail:{fb:"El pasamanos es un control. Busca a quien no se está protegiendo."},nino:{ok:true},ventana:{fb:"La ventana no es el foco del riesgo. Sigue buscando."}},
+  svg:()=>`<rect width="600" height="340" fill="#EAF1FB"/>
+  ${[0,1,2,3,4].map(i=>`<rect x="${100+i*80}" y="${100+i*45}" width="80" height="${240-i*45}" fill="${i%2?"#B8C6DC":"#CBD6E8"}"/><rect x="${100+i*80}" y="${100+i*45}" width="80" height="8" fill="#9FB0CB"/>`).join("")}
+  <path d="M100 62 L500 242" stroke="#B9794B" stroke-width="10" stroke-linecap="round"/><path d="M130 76v38M230 121v38M330 166v38M430 211v38" stroke="#B9794B" stroke-width="6"/>
+  ${hot("rail",92,40,150,95,"pasamanos","")}
+  ${hot("ventana",420,30,130,95,"ventana",`<rect x="425" y="35" width="120" height="85" rx="8" fill="#BFE3F8" stroke="#8FA9C8" stroke-width="6"/><path d="M485 35v85M425 78h120" stroke="#8FA9C8" stroke-width="5"/>`)}
+  ${hot("nino",272,95,78,100,"persona bajando",`<rect x="290" y="168" width="9" height="22" rx="4" fill="#243B6B"/><rect x="304" y="168" width="9" height="22" rx="4" fill="#243B6B"/><rect x="286" y="126" width="30" height="46" rx="10" fill="#F2563F"/><circle cx="301" cy="113" r="15" fill="#F2C7A0"/><path d="M286 111a15 15 0 0 1 30 0q-15-8-30 0z" fill="#3A2A22"/><path d="M312 140l16 8" stroke="#F2C7A0" stroke-width="7" stroke-linecap="round"/><rect x="324" y="134" width="14" height="24" rx="3" fill="#243B6B"/><rect x="327" y="138" width="8" height="15" rx="2" fill="#7FD3FF"/>`)}`},
+enchufe:{prompt:"Inspecciona el puesto. Toca la condición eléctrica peligrosa.",
+  hot:{lampara:{fb:"La lámpara está en condición normal. Busca el punto eléctrico."},reloj:{fb:"El reloj no es una fuente de riesgo. Sigue buscando."},enchufe:{ok:true}},
+  svg:()=>`<rect width="600" height="340" fill="#EAF1FB"/><rect y="250" width="600" height="90" fill="#D7B48A"/><rect y="244" width="600" height="10" fill="#C09C70"/>
+  ${hot("reloj",200,28,95,95,"reloj",`<circle cx="247" cy="76" r="38" fill="#fff" stroke="#243B6B" stroke-width="6"/><path d="M247 76V52M247 76l16 8" stroke="#243B6B" stroke-width="5" stroke-linecap="round"/>`)}
+  ${hot("lampara",50,95,120,155,"lámpara",`<rect x="95" y="190" width="14" height="52" fill="#8C6A4A"/><rect x="72" y="238" width="60" height="10" rx="5" fill="#8C6A4A"/><path d="M70 190l18-70h30l18 70z" fill="#F7D774"/>`)}
+  ${hot("enchufe",310,95,185,175,"tomacorriente",`<rect x="395" y="105" width="72" height="92" rx="14" fill="#fff" stroke="#9FB0CB" stroke-width="5"/><rect x="418" y="128" width="8" height="22" rx="3" fill="#243B6B"/><rect x="438" y="128" width="8" height="22" rx="3" fill="#243B6B"/><rect x="335" y="140" width="60" height="38" rx="10" fill="#243B6B"/><path d="M335 160q-40 10-30 60t60 28" stroke="#243B6B" stroke-width="7" fill="none" stroke-linecap="round"/><ellipse cx="400" cy="262" rx="90" ry="14" fill="#5DB8EC"/><path d="M340 232l-8-14 14 4-6-16" stroke="#E2A100" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M470 214l10-12-14-2 8-14" stroke="#E2A100" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)}`},
+cocina:{prompt:"Inspecciona la kitchenette. Toca la fuente de quemadura.",
+  hot:{taza:{fb:"La taza no quema. Busca lo que emite vapor."},tetera:{ok:true},frutas:{fb:"Las frutas no son un peligro. Sigue buscando."}},
+  svg:()=>`<rect width="600" height="340" fill="#FFF1E2"/><g stroke="#F3DDC4" stroke-width="3"><path d="M0 60h600M0 120h600M0 180h600"/><path d="M100 0v240M200 0v240M300 0v240M400 0v240M500 0v240"/></g><rect y="240" width="600" height="100" fill="#8EA3C0"/><rect y="234" width="600" height="12" fill="#A8BAD2"/>
+  ${hot("taza",105,185,105,58,"taza",`<rect x="130" y="200" width="62" height="42" rx="10" fill="#4C8BF5"/><path d="M192 212q22 4 0 22" stroke="#4C8BF5" stroke-width="7" fill="none" stroke-linecap="round"/>`)}
+  ${hot("tetera",270,80,170,165,"hervidor",`<path d="M300 150h100v70q0 20-20 20h-60q-20 0-20-20z" fill="#C9D2DE" stroke="#8EA3C0" stroke-width="5"/><path d="M400 175l38-24" stroke="#8EA3C0" stroke-width="12" stroke-linecap="round"/><path d="M300 170q-34 4-24 36" stroke="#243B6B" stroke-width="9" fill="none" stroke-linecap="round"/><rect x="335" y="138" width="30" height="14" rx="6" fill="#243B6B"/><path d="M325 120q-10-14 0-26t0-24M355 118q-10-14 0-26t0-24M385 120q-10-14 0-26t0-24" stroke="#9DB2CC" stroke-width="6" fill="none" stroke-linecap="round"/>`)}
+  ${hot("frutas",455,185,125,58,"frutas",`<path d="M470 215h100q-6 28-50 28t-50-28z" fill="#B9794B"/><circle cx="495" cy="205" r="16" fill="#F2563F"/><circle cx="525" cy="202" r="16" fill="#F5B800"/><circle cx="552" cy="208" r="14" fill="#3E9B5F"/>`)}`},
+sismo:{prompt:"Está temblando. Toca a dónde debes dirigirte.",
+  hot:{lampara:{fb:"La lámpara puede caer. Busca la señal de la zona segura."},ventana:{fb:"Los vidrios pueden romperse. Busca la zona segura."},zona:{ok:true}},
+  svg:()=>`<rect width="600" height="340" fill="#EDEFFB"/><rect y="270" width="600" height="70" fill="#C4CBE6"/>
+  <path d="M20 90q-10 20 0 40M580 100q10 20 0 40M12 150q-8 16 0 32" stroke="#8A97C9" stroke-width="5" fill="none" stroke-linecap="round"/>
+  ${hot("lampara",90,0,100,150,"lámpara que se mueve",`<path d="M150 0L128 92" stroke="#243B6B" stroke-width="5"/><circle cx="125" cy="108" r="26" fill="#F7D774"/><path d="M95 116q-14 10-8 26M155 116q14 10 8 26" stroke="#8A97C9" stroke-width="5" fill="none" stroke-linecap="round"/>`)}
+  ${hot("ventana",230,45,140,120,"ventana",`<rect x="235" y="50" width="130" height="110" rx="8" fill="#BFE3F8" stroke="#8FA9C8" stroke-width="6"/><path d="M300 50l-14 40 20 12-12 58" stroke="#fff" stroke-width="4" fill="none" stroke-linejoin="round"/>`)}
+  ${hot("zona",440,40,130,230,"zona segura",`<rect x="470" y="55" width="92" height="92" rx="16" fill="#1E9E6A"/><text x="516" y="97" font-family="Fredoka,Trebuchet MS,sans-serif" font-weight="700" font-size="17" fill="#fff" text-anchor="middle">ZONA</text><text x="516" y="119" font-family="Fredoka,Trebuchet MS,sans-serif" font-weight="700" font-size="17" fill="#fff" text-anchor="middle">SEGURA</text><rect x="512" y="147" width="8" height="123" fill="#8EA3C0"/><path d="M455 235h-45m0 0l14-12m-14 12l14 12" stroke="#1E9E6A" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)}`},
+calle:{prompt:"Estás en la vereda. Toca el elemento que genera el peligro.",
+  hot:{auto:{ok:true},paso:{fb:"El paso peatonal es un control. Busca la fuente del peligro."},semaforo:{fb:"El semáforo regula el cruce. Busca la fuente del peligro."}},
+  svg:()=>`<rect width="600" height="340" fill="#D8EEFF"/><rect y="150" width="600" height="46" fill="#C9D3DF"/><rect y="196" width="600" height="144" fill="#55627A"/><path d="M0 268h130M170 268h130M340 268h130M510 268h90" stroke="#fff" stroke-width="6"/>
+  ${[0,1,2,3,4,5].map(i=>`<rect x="${260+i*22}" y="196" width="14" height="144" fill="#F4F6FA"/>`).join("")}
+  ${hot("semaforo",480,25,90,170,"semáforo",`<rect x="520" y="95" width="10" height="95" fill="#51607C"/><rect x="500" y="30" width="50" height="76" rx="12" fill="#243B6B"/><circle cx="525" cy="50" r="9" fill="#F2563F"/><circle cx="525" cy="68" r="9" fill="#5B6D90"/><circle cx="525" cy="86" r="9" fill="#5B6D90"/>`)}
+  ${hot("paso",245,190,145,145,"paso peatonal","")}
+  ${hot("auto",25,135,215,135,"vehículo",`<rect x="40" y="205" width="170" height="52" rx="14" fill="#F2563F"/><path d="M70 205l24-36h66l26 36z" fill="#F2563F"/><path d="M99 202l16-28h40l16 28z" fill="#BFE3F8"/><circle cx="82" cy="260" r="18" fill="#243B6B"/><circle cx="170" cy="260" r="18" fill="#243B6B"/><path d="M10 215h22M4 232h28M14 247h18" stroke="#fff" stroke-width="5" stroke-linecap="round"/>`)}`},
+sol:{prompt:"Estás a la intemperie. Toca la fuente de radiación.",
+  hot:{sombrilla:{fb:"La sombrilla es un control. Busca la fuente."},protector:{fb:"El protector es un control. Busca la fuente."},sol:{ok:true}},
+  svg:()=>`<rect width="600" height="340" fill="#BFE6FF"/><rect y="170" width="600" height="60" fill="#5DB8EC"/><path d="M0 190q50-12 100 0t100 0 100 0 100 0 100 0 100 0" stroke="#A8DDF7" stroke-width="5" fill="none"/><rect y="226" width="600" height="114" fill="#F2D9A6"/>
+  ${hot("sol",410,5,150,150,"sol",`<g stroke="#FFC845" stroke-width="8" stroke-linecap="round"><path d="M485 18v14M485 128v14M420 80h14M536 80h14M439 34l10 10M521 116l10 10M531 34l-10 10M449 116l-10 10"/></g><circle cx="485" cy="80" r="38" fill="#FFC845"/>`)}
+  ${hot("sombrilla",90,100,200,190,"sombrilla",`<rect x="186" y="150" width="8" height="140" fill="#8C6A4A"/><path d="M95 150a95 70 0 0 1 190 0z" fill="#F2563F"/><path d="M190 80v70M142 96l30 54M238 96l-30 54" stroke="#fff" stroke-width="6"/>`)}
+  ${hot("protector",335,228,80,90,"protector solar",`<rect x="352" y="250" width="44" height="62" rx="10" fill="#4C8BF5"/><rect x="362" y="236" width="24" height="16" rx="4" fill="#243B6B"/><circle cx="374" cy="282" r="12" fill="#FFC845"/>`)}`},
+muelle:{prompt:"Estás en el muelle. Toca el punto de mayor exposición.",
+  hot:{baranda:{fb:"La baranda es un control. Busca el punto sin protección."},chaleco:{fb:"El chaleco es un control. Busca el punto sin protección."},borde:{ok:true}},
+  svg:()=>`<rect width="600" height="340" fill="#CBEBFF"/><rect y="150" width="600" height="190" fill="#4FA9DD"/><path d="M430 190q20-10 40 0t40 0 40 0M440 240q20-10 40 0t40 0" stroke="#8FD0F2" stroke-width="5" fill="none"/>
+  <rect x="0" y="195" width="410" height="60" fill="#A9774A"/><path d="M0 215h410M0 235h410" stroke="#8C6339" stroke-width="3"/><path d="M60 255v70M190 255v70M320 255v70" stroke="#6E4D2B" stroke-width="12"/>
+  ${hot("chaleco",50,40,110,130,"chaleco salvavidas",`<rect x="60" y="30" width="8" height="165" fill="#8C6A4A"/><path d="M78 56h56l8 30v50q0 12-12 12H82q-12 0-12-12V86z" fill="#FF8A2A"/><path d="M92 56v98M120 56v98" stroke="#fff" stroke-width="6"/>`)}
+  ${hot("baranda",180,80,170,125,"baranda",`<path d="M190 195V100M270 195V100M340 195V100M185 110h160M185 140h160" stroke="#8C6A4A" stroke-width="8" stroke-linecap="round" fill="none"/>`)}
+  ${hot("borde",360,150,130,115,"borde del muelle",`<rect x="400" y="195" width="12" height="60" fill="#8C6339"/><path d="M412 195v60" stroke="#6E4D2B" stroke-width="3"/>`)}`}
+};
+const SCENE_OF={"Piso mojado":"pasillo","Escaleras":"escalera","Conexiones eléctricas":"enchufe","Quemaduras":"cocina","Sismo":"sismo","Accidentes de tránsito en la ciudad":"calle","Radiación solar":"sol","Ahogamiento":"muelle"};
+
+/* Pictogramas (caja de 120x120) para los demás casos */
+const IC={
+caida:`<ellipse cx="60" cy="106" rx="44" ry="8" fill="#5DB8EC"/><circle cx="46" cy="28" r="11" fill="#F2C7A0" stroke="#1B2A5B" stroke-width="4"/><path d="M50 42l14 28M56 52l-22 10M58 54l24-10M64 70l-30 28M64 70l30 14" stroke="#1B2A5B" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+golpe:`<rect x="26" y="20" width="56" height="82" rx="6" fill="#CBD6E8" stroke="#1B2A5B" stroke-width="4"/><path d="M26 48h56M26 76h56" stroke="#1B2A5B" stroke-width="4"/><rect x="82" y="52" width="26" height="22" rx="4" fill="#A9BAD2" stroke="#1B2A5B" stroke-width="4"/><path d="M98 14l4 10 10 2-8 6 2 10-8-6-9 5 3-10-7-7 10-1z" fill="#F2563F"/>`,
+pc:`<rect x="20" y="20" width="80" height="54" rx="7" fill="#fff" stroke="#1B2A5B" stroke-width="5"/><path d="M60 74v14M42 90h36" stroke="#1B2A5B" stroke-width="5" stroke-linecap="round"/><rect x="26" y="98" width="68" height="10" rx="4" fill="#CBD6E8" stroke="#1B2A5B" stroke-width="3"/><path d="M34 56l18-14 14 8 16-16" stroke="#F2563F" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+luz:`<circle cx="60" cy="50" r="28" fill="#FFC845" stroke="#1B2A5B" stroke-width="5"/><rect x="48" y="80" width="24" height="16" rx="4" fill="#CBD6E8" stroke="#1B2A5B" stroke-width="4"/><path d="M60 8v10M20 20l8 8M100 20l-8 8M10 52h10M100 52h10M54 50l6 10 6-10" stroke="#1B2A5B" stroke-width="5" stroke-linecap="round" fill="none"/>`,
+estres:`<circle cx="60" cy="60" r="38" fill="#fff" stroke="#1B2A5B" stroke-width="5"/><path d="M66 30L46 62h16l-8 28 24-36H62z" fill="#F2563F"/><path d="M12 40l10 4M12 76l10-4M108 40l-10 4M108 76l-10-4" stroke="#1B2A5B" stroke-width="4" stroke-linecap="round"/>`,
+fuego:`<path d="M60 8c4 26 34 36 34 66 0 20-16 34-34 34S26 94 26 74c0-18 12-26 16-42 6 8 10 10 12 14 2-12 2-24 6-38z" fill="#F2563F" stroke="#1B2A5B" stroke-width="4" stroke-linejoin="round"/><path d="M60 62c2 14 16 18 16 32 0 10-8 14-16 14s-16-4-16-14c0-10 8-14 10-22 4 4 4 4 6-10z" fill="#FFC845"/>`,
+electro:`<path d="M70 8L28 66h28l-10 46 46-64H64z" fill="#FFC845" stroke="#1B2A5B" stroke-width="5" stroke-linejoin="round"/>`,
+comida:`<circle cx="60" cy="62" r="38" fill="#fff" stroke="#1B2A5B" stroke-width="5"/><circle cx="60" cy="62" r="22" fill="#EAF1FB" stroke="#CBD6E8" stroke-width="3"/><circle cx="52" cy="58" r="5" fill="#1E9E6A"/><circle cx="68" cy="66" r="6" fill="#1E9E6A"/><circle cx="58" cy="72" r="3.5" fill="#1E9E6A"/><path d="M12 30v32M8 30v14M16 30v14M12 62v28M110 30c-8 6-8 26 0 32v28" stroke="#1B2A5B" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+virus:`<circle cx="60" cy="60" r="24" fill="#F2563F" stroke="#1B2A5B" stroke-width="4"/><path d="M60 22v10M60 88v10M22 60h10M88 60h10M33 33l7 7M80 80l7 7M87 33l-7 7M40 80l-7 7" stroke="#1B2A5B" stroke-width="5" stroke-linecap="round"/><circle cx="52" cy="54" r="4" fill="#fff"/><circle cx="68" cy="66" r="5" fill="#fff"/>`,
+sedentario:`<circle cx="46" cy="24" r="11" fill="#F2C7A0" stroke="#1B2A5B" stroke-width="4"/><path d="M46 36v32h34v34M80 70h16" stroke="#1B2A5B" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M30 60v42M30 102h40" stroke="#A9BAD2" stroke-width="7" stroke-linecap="round"/><circle cx="96" cy="26" r="14" fill="#fff" stroke="#1B2A5B" stroke-width="4"/><path d="M96 18v9l7 4" stroke="#F2563F" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+auto:`<rect x="10" y="56" width="100" height="32" rx="12" fill="#F2563F" stroke="#1B2A5B" stroke-width="4"/><path d="M28 56l14-24h36l16 24z" fill="#F2563F" stroke="#1B2A5B" stroke-width="4" stroke-linejoin="round"/><path d="M40 54l9-16h20l9 16z" fill="#BFE3F8"/><circle cx="32" cy="90" r="12" fill="#1B2A5B"/><circle cx="88" cy="90" r="12" fill="#1B2A5B"/><path d="M2 40h14M0 52h10" stroke="#1B2A5B" stroke-width="4" stroke-linecap="round"/>`,
+ladron:`<circle cx="60" cy="42" r="24" fill="#1B2A5B"/><path d="M44 40h32v10H44z" fill="#F2C7A0"/><circle cx="52" cy="45" r="3" fill="#1B2A5B"/><circle cx="68" cy="45" r="3" fill="#1B2A5B"/><path d="M14 108c0-24 20-36 46-36s46 12 46 36z" fill="#1B2A5B"/><path d="M90 76l18-6" stroke="#F2563F" stroke-width="5" stroke-linecap="round"/>`,
+avion:`<path d="M60 6c4 0 6 6 6 12v34l44 24v10L66 66v22l14 10v8L60 100 40 106v-8l14-10V66L10 86V76l44-24V18c0-6 2-12 6-12z" fill="#1B2A5B"/>`,
+oido:`<path d="M62 14C38 14 26 34 30 58c3 16 14 22 16 34 2 12 24 14 28-4 2-8-4-12 4-20 10-10 14-18 14-28 0-16-12-28-30-28z" fill="#F2C7A0" stroke="#1B2A5B" stroke-width="4"/><path d="M60 38c-12 0-16 10-12 22" stroke="#1B2A5B" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M104 40q8 10 0 20M112 32q14 18 0 36" stroke="#F2563F" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+protesta:`<path d="M18 48l56-22v64L18 72z" fill="#F2563F" stroke="#1B2A5B" stroke-width="4" stroke-linejoin="round"/><rect x="10" y="46" width="14" height="28" rx="4" fill="#1B2A5B"/><path d="M28 76l6 22h12l-6-20" fill="#1B2A5B"/><path d="M86 40q10 20 0 40M98 30q16 30 0 60" stroke="#1B2A5B" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="28" cy="110" r="6" fill="#1B2A5B"/><circle cx="60" cy="110" r="6" fill="#1B2A5B"/><circle cx="92" cy="110" r="6" fill="#1B2A5B"/>`,
+gas:`<g fill="#C6CEDD" stroke="#1B2A5B" stroke-width="4"><circle cx="40" cy="62" r="22"/><circle cx="68" cy="48" r="26"/><circle cx="90" cy="68" r="18"/></g><rect x="30" y="62" width="70" height="26" rx="10" fill="#C6CEDD"/><path d="M30 88h70" stroke="#1B2A5B" stroke-width="4"/><path d="M40 102l-4 10M60 102l-4 12M80 102l-4 10" stroke="#F2563F" stroke-width="5" stroke-linecap="round"/>`,
+tormenta:`<g fill="#9FB0CB" stroke="#1B2A5B" stroke-width="4"><circle cx="40" cy="48" r="20"/><circle cx="66" cy="36" r="24"/><circle cx="90" cy="52" r="17"/></g><rect x="28" y="48" width="72" height="22" rx="10" fill="#9FB0CB"/><path d="M28 70h72" stroke="#1B2A5B" stroke-width="4"/><path d="M64 70l-14 22h14l-8 20 24-28H66l8-14z" fill="#FFC845" stroke="#1B2A5B" stroke-width="3" stroke-linejoin="round"/>`,
+sol:`<circle cx="60" cy="60" r="26" fill="#FFC845" stroke="#1B2A5B" stroke-width="4"/><path d="M60 10v14M60 96v14M10 60h14M96 60h14M25 25l10 10M85 85l10 10M95 25L85 35M35 85L25 95" stroke="#1B2A5B" stroke-width="5" stroke-linecap="round"/>`,
+muelle:`<path d="M0 78q15-8 30 0t30 0 30 0 30 0V120H0z" fill="#5DB8EC"/><rect x="8" y="56" width="84" height="12" rx="3" fill="#A9774A" stroke="#1B2A5B" stroke-width="3"/><path d="M22 68v32M50 68v32M78 68v32" stroke="#6E4D2B" stroke-width="7"/><path d="M14 56V36M50 56V36M86 56V36M10 40h84" stroke="#1B2A5B" stroke-width="4" stroke-linecap="round"/>`,
+balanza:`<path d="M60 18v78M36 102h48" stroke="#1B2A5B" stroke-width="6" stroke-linecap="round"/><path d="M20 38h80" stroke="#1B2A5B" stroke-width="6" stroke-linecap="round"/><path d="M20 38l-13 30h26zM100 38l-13 30h26z" fill="#FFC845" stroke="#1B2A5B" stroke-width="4" stroke-linejoin="round"/><circle cx="60" cy="18" r="7" fill="#F2563F"/>`,
+puesto:`<path d="M26 108c0-26 14-40 34-40s34 14 34 40z" fill="#1B2A5B"/><circle cx="60" cy="42" r="17" fill="#F2C7A0" stroke="#1B2A5B" stroke-width="4"/><path d="M42 40a18 18 0 0 1 36 0z" fill="#FFC845" stroke="#1B2A5B" stroke-width="4" stroke-linejoin="round"/><rect x="38" y="38" width="44" height="6" rx="3" fill="#FFC845" stroke="#1B2A5B" stroke-width="3"/><rect x="48" y="80" width="24" height="16" rx="3" fill="#fff"/><path d="M52 86h16M52 91h10" stroke="#1B2A5B" stroke-width="3" stroke-linecap="round"/>`,
+corte:`<path d="M20 90L46 20l22 40z" fill="#BFE3F8" stroke="#1B2A5B" stroke-width="4" stroke-linejoin="round"/><path d="M62 96l22-54 24 34z" fill="#DCEFFC" stroke="#1B2A5B" stroke-width="4" stroke-linejoin="round"/><path d="M90 14c8 12 10 20 0 26-10-6-8-14 0-26z" fill="#F2563F"/>`,
+quimico:`<path d="M46 12h28v30l30 54c5 9-1 16-10 16H26c-9 0-15-7-10-16l30-54z" fill="#fff" stroke="#1B2A5B" stroke-width="5" stroke-linejoin="round"/><path d="M36 82h48l14 24H22z" fill="#1E9E6A"/><circle cx="52" cy="92" r="4" fill="#fff"/><circle cx="70" cy="98" r="3" fill="#fff"/><path d="M40 12h40" stroke="#1B2A5B" stroke-width="6" stroke-linecap="round"/>`,
+carga:`<rect x="40" y="56" width="52" height="42" rx="5" fill="#D7B48A" stroke="#1B2A5B" stroke-width="4"/><path d="M40 72h52" stroke="#1B2A5B" stroke-width="3"/><path d="M66 54V20M52 32l14-14 14 14" stroke="#F2563F" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="40" r="9" fill="#F2C7A0" stroke="#1B2A5B" stroke-width="3"/><path d="M20 50c0 22 6 36 14 46" stroke="#1B2A5B" stroke-width="7" fill="none" stroke-linecap="round"/>`,
+solo:`<circle cx="60" cy="40" r="14" fill="#F2C7A0" stroke="#1B2A5B" stroke-width="4"/><path d="M36 100c0-26 10-40 24-40s24 14 24 40z" fill="#1B2A5B"/><circle cx="60" cy="60" r="52" fill="none" stroke="#9FB0CB" stroke-width="4" stroke-dasharray="6 8"/><circle cx="100" cy="22" r="13" fill="#fff" stroke="#1B2A5B" stroke-width="4"/><path d="M100 14v9l6 4" stroke="#F2563F" stroke-width="4" fill="none" stroke-linecap="round"/>`
+};
+const KIND={"Golpes con el mobiliario":"golpe","Archivadores":"golpe","Presión de entrega":"estres","Iluminación insuficiente":"luz","Postura forzada frente al PC":"pc","Radiación de pantallas":"pc","Movimientos repetitivos":"pc","Pantalla demasiado cerca":"pc","Incendio":"fuego","Electrocución en la kitchenette":"electro","Intoxicación alimentaria":"comida","Resbalones en la kitchenette":"caida","COVID-19":"virus","Ergonomía en casa":"pc","Aislamiento":"solo","Sedentarismo":"sedentario","Incendio y electricidad en casa":"fuego","Atropellos":"auto","Robos y asaltos":"ladron","Accidentes en carretera":"auto","Atropellos en ruta":"auto","Robos y asaltos en ruta":"ladron","Manifestaciones y protestas":"protesta","Gases lacrimógenos":"gas","Estrés ante una manifestación":"estres","Presión en los oídos":"oido","Accidente de aviación":"avion","Turbulencia":"avion","Resbalones en el muelle":"caida","Clima adverso":"tormenta","Radiación solar en espacios públicos":"sol","Robos y asaltos en la actividad":"ladron","Intoxicación alimentaria en campo":"comida","Objetos punzocortantes":"corte","Productos químicos":"quimico","Caídas y resbalones al limpiar":"caida","Cortes y pinchazos":"corte","Sobreesfuerzo y posturas":"carga","Contaminación biológica":"virus","Polvo y alérgenos":"gas","Limpieza en solitario":"solo"};
+const TINT=["#E3EEFB","#E4F5EC","#FFF1E2","#EDEFFB","#FDEBE8"];
+const banner=(kind,i)=>`<svg viewBox="0 0 600 170" role="img" aria-label="Ilustración del caso"><rect width="600" height="170" fill="${TINT[i%TINT.length]}"/><g transform="translate(240 25) scale(1.0)">${IC[kind]}</g><circle cx="90" cy="130" r="26" fill="#fff" opacity=".55"/><circle cx="520" cy="40" r="34" fill="#fff" opacity=".55"/></svg>`;
+
+/* Preguntas: escenario, respuesta correcta, 3 distractores, por qué */
+const QA={
+"Piso mojado":["Limpieza trapeó el pasillo y la señal de piso mojado ya no está. Debes cruzar con una carpeta en cada mano.","Esperar a que seque o rodear por una zona seca, y avisar que falta la señal.",["Cruzar con pasos cortos; el piso se seca solo.","Pasar pegado a la pared, donde hay menos agua.","Cruzar rápido para reducir el tiempo de exposición."],"La caída al mismo nivel se controla con orden y limpieza, y con autocuidado. Una señal faltante también es una condición que se reporta."],
+"Golpes con el mobiliario":["Sales apurado de una reunión con la laptop en la mano y hay una silla fuera de lugar junto a la esquina del escritorio.","Mantener sillas y cajoneras ordenadas, y moverte atento al espacio.",["Usar calzado cerrado para que los golpes duelan menos.","Evitar levantarte durante las reuniones.","Esperar a que alguien más ordene el espacio."],"El acto inseguro registrado es no atender las condiciones del puesto. Se controla con orden y capacitación en autocuidado."],
+"Escaleras":["Bajas a una reunión con el celular en una mano y una carpeta en la otra.","Guardar el celular, dejar una mano libre y usar los tres apoyos con el pasamanos.",["Bajar rápido para pasar menos tiempo en la escalera.","Mirar la pantalla y avanzar despacio.","Usar el pasamanos solo en los tramos largos."],"El control del IPERC es la capacitación en uso y manejo de escaleras con tres apoyos."],
+"Archivadores":["El cajón del archivador está lleno y las carpetas se atascan. Tiras con fuerza.","Abrir un cajón a la vez, sacar las carpetas con control y reordenar el cajón.",["Tirar más fuerte para destrabar.","Abrir varios cajones para ver cuál se atasca.","Dejar el cajón abierto para no repetir el esfuerzo."],"El riesgo es un golpe por carpetas que salen de golpe, en ojos o cara. El control es la capacitación en orden y almacenaje."],
+"Conexiones eléctricas":["En tu puesto hay un tomacorriente con agua cerca y un cable pelado.","No tocarlo, mantener distancia y avisar a mantenimiento para que lo desenergicen.",["Secar el agua con papel y seguir usándolo.","Pasar el cargador a otro enchufe y dejar el pelado.","Cubrir el cable con cinta y continuar."],"Nivel Intolerable. El circuito debe cumplir la NTP 370.053 y los alargadores deben quedar fuera del alcance y contacto de las personas."],
+"Presión de entrega":["Tienes tres entregas el mismo día y hace una semana duermes mal y sientes tensión constante.","Priorizar, avisar a tu jefatura a tiempo que los plazos no son realistas y hacer pausas.",["Quedarte hasta tarde cada día hasta terminar.","Entregar todo a medias para cumplir los plazos.","No decir nada para no mostrar debilidad."],"Es un riesgo psicosocial. El control del IPERC es la capacitación en riesgos psicosociales y sus cuidados."],
+"Iluminación insuficiente":["Las luminarias de tu zona están fundidas y empiezas a entrecerrar los ojos para leer.","Reportar para reemplazar las luminarias y cumplir tu examen periódico de agudeza visual.",["Subir el brillo de la pantalla al máximo.","Acercarte más a los documentos.","Trabajar solo con la luz de la pantalla."],"El control incluye mantenimiento de luminarias, monitoreo de iluminación y examen periódico de agudeza visual (RM 375-2008-TR)."],
+"Postura forzada frente al PC":["Trabajas toda la mañana con la laptop sobre las piernas y sientes molestias en el cuello.","Usar escritorio y silla ajustable, con el monitor a la altura de los ojos, y hacer pausas activas.",["Poner un cojín bajo la laptop y seguir igual.","Inclinarte hacia la pantalla para ver mejor.","Cambiar la laptop de pierna cada hora."],"El control es ajustar silla, teclado y monitor, apoyar la espalda y hacer pausas activas."],
+"Radiación de pantallas":["Pasas muchas horas frente a pantallas y te preocupa la radiación electromagnética.","Mantener distancia adecuada, usar pantallas de baja radiación y descansar con regularidad.",["Cubrir el monitor con un protector mate.","Apagar el monitor y dejar la CPU encendida.","Bajar el volumen de los parlantes."],"En el IPERC esta exposición se controla con equipos de baja radiación, distancia y pausas."],
+"Movimientos repetitivos":["Tras horas de mouse y teclado te hormiguean los dedos de la mano.","Usar mouse y teclado ergonómicos, estirar y descansar las manos con regularidad.",["Seguir hasta terminar y descansar el fin de semana.","Apretar más el mouse para tener control.","Cambiar a la otra mano sin pausas ni ajustes."],"El riesgo es tendinitis y síndrome del túnel carpiano. Se controla con dispositivos ergonómicos y pausas regulares."],
+"Pantalla demasiado cerca":["Terminas el día con ojos secos y dolor ocular. Sueles trabajar a unos 20 cm de la pantalla.","Alejarte a una distancia cómoda, parpadear y descansar la vista mirando lejos con regularidad.",["Aumentar el tamaño de letra y quedarte igual de cerca.","Usar gotas oculares y seguir igual.","Bajar la luz de la sala."],"Es fatiga visual. El control es mantener una distancia adecuada y hacer pausas para descansar los ojos."],
+"Sismo":["Suena la alarma de sismo mientras estás en una reunión con visitantes.","Mantener la calma, guiar a los visitantes por la ruta de evacuación y dirigirse a la zona segura.",["Terminar la reunión primero; los sismos duran poco.","Usar el ascensor para salir más rápido.","Esperar en tu lugar a que llegue seguridad."],"Nivel Intolerable. El acto inseguro registrado es no evacuar. Los controles son las alarmas de evacuación y los simulacros."],
+"Incendio":["Huele a humo en el pasillo y aún no suena la alarma.","Activar la alarma, evacuar por la ruta señalizada y no usar el ascensor.",["Buscar el foco y apagarlo tú solo.","Esperar confirmación para no generar pánico.","Cerrar la puerta de tu oficina y seguir trabajando."],"Nivel Intolerable. Los controles son equipos de emergencia en buen estado, plan de contingencia y simulacros periódicos."],
+"Ergonomía en casa":["Trabajas desde el sofá con la laptop y te duele la espalda al final del día.","Armar un puesto con mesa, silla ajustable, pantalla a la altura de los ojos y pausas.",["Poner un cojín bajo la laptop.","Alternar entre el sofá y la cama.","Trabajar de pie todo el día."],"El IPERC pide configurar un espacio ergonómico en casa con silla ajustable y postura adecuada (Ley 31572)."],
+"Aislamiento":["Llevas semanas en remoto y notas desgano y poco contacto con el equipo.","Mantener comunicación regular con colegas y jefatura, y participar en las actividades virtuales.",["Mantener la cámara apagada para no distraerte.","Responder solo lo indispensable.","Dejar los chats para el final del día."],"El aislamiento social es un riesgo psicosocial del teletrabajo. El control es la comunicación regular y la participación en actividades del equipo."],
+"Sedentarismo":["Pasas ocho horas sentado frente a la laptop sin levantarte.","Programar pausas activas durante el día y mantener una rutina regular de actividad física.",["Compensar con ejercicio intenso el fin de semana.","Tomar café para mantenerte activo.","Sentarte más recto y no levantarte."],"El control es realizar pausas activas y ejercicio durante el día, con una rutina regular."],
+"Incendio y electricidad en casa":["Conectas laptop, monitor, impresora y cargadores a un solo enchufe de la pared con adaptadores.","Usar regleta con protección, no sobrecargar enchufes y tener extintor y detector de humo.",["Cubrir los adaptadores con cinta aislante.","Poner los adaptadores en cascada.","Desconectar solo la impresora cuando sales."],"En casa también aplica: extintor y detectores de humo, equipos y cables en buen estado, y sin sobrecarga de enchufes."],
+"Electrocución en la kitchenette":["La tetera chisporrotea al conectarla y hay un charco junto a la regleta.","Alejarte del charco, no usar el equipo y avisar a mantenimiento.",["Secar el charco y seguir usando la tetera.","Pasarla a otra regleta del mismo mueble.","Enchufarla y alejarte hasta que hierva."],"Nivel Intolerable en los 16 puestos. Se controla con enchufes y cables en buen estado, sin sobrecarga y lejos de líquidos y de fuentes de calor."],
+"Intoxicación alimentaria":["Un táper lleva tres días en el refrigerador compartido. Huele raro, pero se ve bien.","Descartarlo y mantener limpios el refrigerador y los utensilios.",["Calentarlo bien en el microondas.","Probar un poco para decidir.","Dejarlo; seguro es de otra persona."],"El control es higiene personal, limpieza de superficies y utensilios, y almacenamiento adecuado de alimentos."],
+"Resbalones en la kitchenette":["Se derramó café frente a la cafetera y el tapete se arrugó.","Secar de inmediato, estirar el tapete antideslizante y mantener los cables fuera del paso.",["Poner una servilleta encima y seguir.","Pasar por el borde, donde no llegó el café.","Esperar a que el personal de limpieza lo haga."],"El control es mantener el suelo limpio y seco, usar tapetes antideslizantes y asegurar los cables."],
+"Quemaduras":["Debes mover una olla recién retirada del fuego.","Usar agarraderas o guantes, con el camino despejado.",["Agarrarla con un trapo húmedo.","Agarrarla rápido por el asa.","Esperar y tocarla de vez en cuando para ver si enfría."],"El control es usar agarraderas y guantes con objetos calientes y ajustar la temperatura de los equipos. Un trapo húmedo transmite el calor."],
+"Accidentes de tránsito en la ciudad":["Pides un taxi por aplicación y llega un vehículo y un conductor distintos a los que muestra la app.","No subir; usar solo empresas y conductores formales o autorizados, y siempre el cinturón.",["Subir si ofrece menor tarifa.","Subir y compartir tu ubicación con alguien.","Subir y sentarte atrás sin cinturón."],"Nivel Intolerable. Los controles son empresas y conductores formales o autorizados, cumplir las normas de tránsito y usar cinturón."],
+"Atropellos":["Debes cruzar una avenida con poco tráfico, a media cuadra del paso peatonal.","Caminar hasta el paso peatonal y cruzar atento, sin mirar el celular.",["Cruzar por el medio mirando solo hacia la izquierda.","Cruzar corriendo porque hay poco tráfico.","Cruzar detrás de otro peatón."],"Los controles son respetar señales, cruzar por lugares designados y prestar atención al entorno."],
+"Robos y asaltos":["Sales de una reunión de noche y la app te propone caminar por una calle poco iluminada.","Evitar zonas solitarias y poco iluminadas, guardar objetos de valor y pedir transporte formal.",["Caminar con auriculares para no mirar.","Mostrar el celular para seguir el mapa.","Apurar el paso y cruzar por el centro de la calle."],"Los controles son evitar áreas peligrosas, mantener objetos de valor fuera de la vista y no transitar por lugares solitarios."],
+"Accidentes en carretera":["Debes viajar a otra ciudad. El pasaje con una empresa informal es más barato y sale antes.","Viajar con empresa y conductor formales o autorizados, y con el cinturón puesto.",["Aceptar y avisar a tu jefatura para que quede registrado.","Viajar de noche para evitar tráfico.","Compartir un taxi con otros pasajeros."],"Nivel Intolerable. El control es contratar empresas y conductores formales o autorizados y cumplir las normas de tránsito."],
+"Atropellos en ruta":["El bus te deja en un paradero de carretera sin paso peatonal.","Esperar a que el bus se aleje, mirar ambos lados y cruzar donde haya visibilidad.",["Cruzar por delante del bus para ganar tiempo.","Cruzar mirando el celular para ubicar el hotel.","Seguir a otro peatón."],"El riesgo es de fracturas, heridas y muerte. El control es prestar atención al entorno y respetar la señalización."],
+"Robos y asaltos en ruta":["En una parada del viaje ves un terminal casi vacío y tus pertenencias en el asiento.","Evitar zonas peligrosas, no exhibir objetos de valor y mantener puertas con seguro.",["Dejar la laptop a la vista en el asiento.","Alejarte del terminal para buscar un local más barato.","Dejar a una persona desconocida cuidando tus cosas."],"Intolerable. Los controles son evitar áreas peligrosas, mantener objetos de valor fuera de la vista y cerrar las puertas con llave."],
+"Manifestaciones y protestas":["Tu ruta pasa por una ciudad con una marcha anunciada.","Buscar vías alternativas y mantenerte alejado de enfrentamientos.",["Pasar rápido por el centro.","Detenerte a grabar.","Bajar del vehículo para ver qué ocurre."],"El control es mantenerse alejado de enfrentamientos y buscar vías alternativas para evitar el área."],
+"Gases lacrimógenos":["Tu vehículo se acerca a una zona donde dispersan una protesta con gases.","Mantener las ventanas cerradas, usar la ventilación interna y retirarte de la zona.",["Bajar las ventanas para respirar aire fresco.","Detenerte y esperar con el motor apagado.","Taparte la boca con la mano y seguir."],"El control es ventanas cerradas y ventilación interna o aire acondicionado del vehículo."],
+"Estrés ante una manifestación":["Quedas bloqueado por una protesta y empiezas a sentir angustia.","Mantener la calma y aplicar el plan de acción que conoces para estas situaciones.",["Intentar avanzar entre la multitud.","Bajar y negociar con los manifestantes.","Apagar el celular para no recibir noticias."],"El IPERC pide mantener la calma, ser consciente de las emociones y conocer el plan de acción."],
+"Presión en los oídos":["Durante el descenso sientes dolor fuerte en los oídos.","Bostezar o chupar un caramelo, y si lo necesitas usar tapones.",["Aguantar sin hacer nada hasta aterrizar.","Subir el volumen de los audífonos.","Tomar un analgésico antes de despegar."],"El control del IPERC es chupar caramelos o bostezar durante el despegue y el aterrizaje, y opcionalmente usar tapones."],
+"Accidente de aviación":["Estás por despegar y empieza la demostración de seguridad.","Atender las instrucciones del personal de vuelo y ubicar la salida más cercana.",["Ignorarla; ya la escuchaste antes.","Dejar el cinturón flojo para estar cómodo.","Poner el equipaje junto a la salida de emergencia."],"Nivel Intolerable. El control es cumplir las normas de la aerolínea y seguir las instrucciones del personal de vuelo."],
+"Turbulencia":["Se enciende la señal del cinturón por turbulencia y quieres ir al baño.","Permanecer sentado con el cinturón abrochado y seguir al personal de vuelo.",["Ir rápido antes de que aumente.","Sujetarte de los asientos al caminar.","Pararte a sacar algo del compartimiento."],"El riesgo son caídas y fracturas en cabina. El control es mantener el cinturón abrochado durante el vuelo."],
+"COVID-19":["Un compañero tose y tiene fiebre, pero quiere quedarse porque tiene una entrega.","Que reporte síntomas a su jefatura, siga el plan de vigilancia y se ventile el ambiente.",["Que se quede con mascarilla y sin avisar.","Cerrar la sala para que no se enfríe.","Esperar a que otros presenten síntomas."],"El IPERC mantiene ventilación, esquema de vacunación, reporte a la jefatura y el plan de vigilancia, prevención y control."],
+"Resbalones en el muelle":["El muelle amaneció húmedo y el tramo hacia el bote no tiene baranda continua.","Usar calzado antideslizante, apoyarte en las barandas y conocer los riesgos de la instalación.",["Caminar rápido con las manos en los bolsillos.","Usar zapatos de cuero, que son firmes.","Caminar por el borde, donde la madera se ve más seca."],"Nivel Intolerable. Los controles son barandas, conocimiento de los riesgos de las instalaciones y calzado antideslizante."],
+"Ahogamiento":["Debes acercarte al borde para recibir a un colega que llega en bote.","Mantener distancia segura del borde y usar chaleco salvavidas en áreas peligrosas.",["Acercarte con cuidado sin chaleco, porque sabes nadar.","Usar chaleco solo si el mar está agitado.","Pedir que alguien te sujete de la ropa."],"Nivel Intolerable. Los controles son distancia segura del borde, normas de seguridad y chaleco salvavidas."],
+"Clima adverso":["Se anuncia viento fuerte y neblina cuando visitas el muelle.","Revisar las advertencias, vestir ropa adecuada y ubicar un refugio o zona de resguardo.",["Continuar con tu agenda; el clima cambia rápido.","Quedarte en el borde para ver el cambio.","Cubrirte con la chaqueta y seguir."],"El control es seguir las recomendaciones meteorológicas, usar ropa adecuada y tener un refugio en caso de tormentas."],
+"Radiación solar":["Estarás cuatro horas a la intemperie en el muelle.","Aplicar protector solar, usar lentes y sombrero, y reaplicar durante la jornada.",["Aplicar protector una sola vez por la mañana.","Usar solo lentes de sol.","Evitar el protector para no sentir la piel grasosa."],"El IPERC pide sensibilización en radiación UV y uso de protector solar. El daño es ocular y envejecimiento prematuro de la piel."],
+"Radiación solar en espacios públicos":["Participas en una jornada de limpieza de playa de 9 a 14 h.","Protector solar reaplicado, sombrero, lentes, hidratación y pausas a la sombra.",["Hidratarte y listo.","Hacer la jornada en la hora de mayor sol para terminar antes.","Usar manga corta para estar fresco."],"El control es la sensibilización en radiación UV y el uso de protectores solares."],
+"Robos y asaltos en la actividad":["En una jornada de limpieza en un lugar apartado, un grupo desconocido se acerca a las pertenencias del equipo.","Coordinar la presencia de la autoridad local, evitar lugares solitarios y dejar objetos de valor fuera de la vista.",["Dejar las mochilas juntas y vigilar de lejos.","Dejar las mochilas en el vehículo a la vista.","Enfrentar al grupo."],"Intolerable. El control incluye evitar lugares solitarios o poco iluminados y gestionar la permanencia de control por la autoridad local."],
+"Intoxicación alimentaria en campo":["El almuerzo de la jornada lo ofrece un vendedor ambulante a mitad de precio.","Preferir proveedores formales y mantener higiene de manos y utensilios.",["Aceptar si otro compañero ya comió.","Comer solo lo que se vea bien cocido.","Comer rápido para que no se enfríe."],"El control del IPERC es higiene personal, limpieza de superficies y utensilios, y uso de proveedores formales."],
+"Objetos punzocortantes":["Encuentras vidrios y una jeringa entre los residuos de la playa.","Usar pinzas, guantes anticorte y calzado cerrado, y depositar en contenedores rígidos rotulados.",["Recogerlos con guantes comunes y bolsa plástica.","Taparlos con arena y seguir.","Agruparlos con la mano en una bolsa doble."],"Los controles incluyen pinzas o tenazas, contenedores rígidos, vacunación vigente (tétanos, hepatitis A y B) y botiquín disponible."],
+"Productos químicos":["Debes limpiar con un desinfectante nuevo en un baño sin ventilación.","Leer la etiqueta, ventilar el área y usar guantes y mascarilla.",["Mezclarlo con lejía para que limpie más.","Usar solo guantes y no ventilar.","Dosificar a ojo."],"Los controles son almacenar y manipular de forma segura, ventilar, seguir las instrucciones de la etiqueta y usar EPP."],
+"Caídas y resbalones al limpiar":["Terminas de trapear un pasillo y debes limpiar una luminaria en altura.","Señalizar el piso mojado, usar calzado antideslizante y una escalera asegurada.",["Apoyar la escalera sobre una silla.","Subirte a una mesa.","Dejar la señal para el final."],"Los controles son mantener el piso limpio y seco, señales de advertencia, asegurar escaleras y calzado antideslizante."],
+"Cortes y pinchazos":["En una papelera hay un objeto filoso entre los papeles.","Usar herramientas adecuadas y guantes resistentes al corte, y desechar en el recipiente correcto.",["Presionar la bolsa con la mano para compactar.","Apartarlo con el pie.","Sacarlo con la mano sin guantes."],"El riesgo son heridas e infecciones. El control es herramientas adecuadas, guantes y desecho correcto."],
+"Sobreesfuerzo y posturas":["Debes mover un balde con agua y un tacho de basura grande, ambos llenos.","Usar técnica de levantamiento seguro, dividir la carga o pedir ayuda, y alternar posturas.",["Cargar los dos a la vez para ahorrar viajes.","Doblar la espalda para ahorrar tiempo.","Arrastrar el tacho por el piso."],"El control es técnicas de levantamiento seguro, pedir ayuda con objetos pesados y entrenamiento en manejo manual de cargas."],
+"Contaminación biológica":["Debes limpiar un baño con restos de fluidos corporales.","Seguir procedimientos de higiene, usar desinfectantes efectivos y guantes.",["Limpiar con el mop común y agua.","Usar el mismo trapo en toda la oficina.","Limpiar sin guantes y lavarte las manos después."],"Los controles son procedimientos de higiene, desinfectantes efectivos, capacitación en residuos biológicos y EPP."],
+"Polvo y alérgenos":["Debes limpiar una oficina con mucho polvo y tu nariz empieza a irritarse.","Aplicar limpieza en seco que no disperse polvo, ventilar y usar mascarilla o respirador.",["Barrer en seco con movimientos rápidos.","Cerrar las ventanas para que el polvo no salga.","Sacudir con un plumero."],"El IPERC pide procedimientos de limpieza en seco para evitar la dispersión de polvo, buena ventilación y mascarilla."],
+"Limpieza en solitario":["Limpias sola un piso de oficinas fuera del horario normal.","Cumplir el protocolo de confirmaciones intermedias y mantener la ficha médica actualizada.",["Avisar solo si terminas más tarde de lo previsto.","Llevar el celular y nada más.","Trabajar más rápido para salir antes."],"Intolerable: una demora en el auxilio agrava la lesión. Los controles son el protocolo de confirmaciones, la ficha médica y la capacitación en señales de alarma."]
+};
+const AREA_OF={"Oficina":"Oficina","Kitchenette":"Kitchenette y entorno","Contacto con personas":"Entorno de trabajo","Teletrabajo":"Teletrabajo","En la ciudad":"Traslados","Viaje aéreo":"Traslados"};
+/* Fase 1 dividida en secciones cortas */
+const SEC1=[
+ {title:"Orden y electricidad en la oficina",sub:"Pisos, escaleras, mobiliario, archivadores y conexiones.",ids:[0,1,2,3,4],ic:"electro"},
+ {title:"Trabajo con computadora",sub:"Carga de trabajo, luz, postura, pantalla y movimientos repetitivos.",ids:[5,6,7,8,9,10],ic:"pc"},
+ {title:"Emergencias y salud",sub:"Sismo, incendio y COVID-19.",ids:[11,12,33],ic:"fuego"},
+ {title:"Kitchenette",sub:"Electricidad, alimentos, pisos y superficies calientes.",ids:[17,18,19,20],ic:"comida"},
+ {title:"Teletrabajo",sub:"Tu casa también es un puesto de trabajo.",ids:[13,14,15,16],ic:"sedentario"},
+ {title:"Traslados y viajes",sub:"Tránsito, atropellos, robos y vuelos.",ids:[21,22,23,30,31,32],ic:"avion"}
+];
+const ACT_SEC={"Entre ciudades":["Viajes por carretera","Tránsito, robos y protestas durante la ruta.","auto"],"Muelles":["Muelles pesqueros","Caídas, agua, clima y sol en las instalaciones.","muelle"],"Espacios públicos":["Limpieza en espacios públicos","Sol, robos, alimentos y residuos punzocortantes.","sol"],"Limpieza":["Labores de limpieza","Químicos, esfuerzo, riesgo biológico, polvo y trabajo en solitario.","quimico"]};
+const N1=SEC1.reduce((a,s)=>a+s.ids.length,0);
+const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const pill=l=>`<span class="pill ${l}">${LVL[l]||l}</span>`;
+const sec=()=>S.secs[S.si], cur=()=>S.secs[S.si].cases[S.qi];
+function speak(t){ try{ if(!("speechSynthesis" in window)) return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang="es-PE"; const v=speechSynthesis.getVoices().find(v=>/^es/i.test(v.lang)); if(v){u.voice=v;u.lang=v.lang;} u.rate=.95; speechSynthesis.speak(u);}catch(e){} }
+
+/* Sonido de éxito: tres notas ascendentes con WebAudio */
+let AC=null, SND=true;
+function chime(){
+  if(!SND) return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    const t=AC.currentTime;
+    [[523.25,0],[659.25,.12],[783.99,.24],[1046.5,.38]].forEach(([f,d])=>{
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.type="sine"; o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+d); g.gain.linearRampToValueAtTime(.2,t+d+.02); g.gain.exponentialRampToValueAtTime(.001,t+d+.5);
+      o.connect(g); g.connect(AC.destination); o.start(t+d); o.stop(t+d+.55);
+    });
+  }catch(e){}
+}
+const SND_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const SND_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M16 9l6 6M22 9l-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+const MIS_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
+const Q_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M9.2 9.5a2.9 2.9 0 1 1 4.6 2.3c-1 .7-1.8 1.2-1.8 2.4M12 17.2v.1" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+const mission=(label,text,icon)=>`<div class="mission" role="note"><span class="mi">${icon}</span><div><small>${label}</small><b>${esc(text)}</b></div></div>`;
+
+const ckey=()=>S.phase+"|"+(S.puesto?S.puesto.name:"")+"|"+S.si+"|"+S.qi;
+function newCase(){
+  const k=ckey(); S.modal=false;
+  if(S.hist[k]){ S.cs=S.hist[k]; return; }
+  const c=cur();
+  if(c.t==="haz"){
+    const h=H[c.hid], qa=QA[h.t], sc=SCENE_OF[h.t];
+    S.cs={step:sc?"find":"q",wrong:[],done:false,first:true,scene:sc,msg:null,
+      opts:shuffle([{t:qa[1],ok:true},...shuffle(qa[2]).slice(0,2).map(t=>({t,ok:false}))])};
+  } else {
+    const hi=RANK[c.la]<RANK[c.lb]?c.a:c.b;
+    S.cs={step:"q",wrong:[],done:false,first:true,scene:null,msg:null,
+      opts:shuffle([{t:H[c.a].t,ok:hi===c.a},{t:H[c.b].t,ok:hi===c.b}])};
+  }
+  S.hist[k]=S.cs;
+}
+function headUpdate(){
+  $("#starsbox").innerHTML=STAR+"<span>"+S.pts+"</span>";
+  const pr=$("#prog"); $("#navrow").hidden=(S.view==="start");
+  if(["intro","play","summary"].includes(S.view)){
+    pr.hidden=false;
+    const total=S.secs.reduce((a,s)=>a+s.cases.length,0);
+    const done=S.secs.slice(0,S.si).reduce((a,s)=>a+s.cases.length,0)+(S.view==="play"?S.qi:S.view==="summary"?sec().cases.length:0);
+    $("#plabel").textContent=(S.phase===1?"Parte 1":"Parte 2")+" · Sección "+(S.si+1)+" de "+S.secs.length+" · "+sec().title;
+    $("#pcount").textContent=S.view==="play"?"Caso "+(S.qi+1)+" de "+sec().cases.length:"";
+    $("#pfill").style.width=Math.round(done/total*100)+"%";
+  } else pr.hidden=true;
+  $("#snd").innerHTML=SND?SND_ON:SND_OFF; $("#snd").setAttribute("aria-pressed",SND?"true":"false"); $("#snd").setAttribute("aria-label",SND?"Sonido activado":"Sonido desactivado");
+}
+function startView(){
+  if(S.resume&&!S.fresh) return `<div class="card"><div class="eyebrow">Juego de seguridad</div><h2>Tienes una partida en curso</h2><p>${S.name?"<b>"+esc(S.name)+"</b>, sigue":"Sigue"} donde la dejaste.</p><div class="row"><button class="btn phase" id="cont">Continuar</button><button class="btn alt" id="fresh">Empezar de nuevo</button></div></div>`;
+  return `<div class="card"><div class="eyebrow">Juego de seguridad</div><h1>¿Sabrías qué hacer?</h1><p class="lead">Descubre los peligros de tu trabajo y practica cómo evitarlos.</p>
+  <div class="how"><div><span class="hi">${MIS_ICON}</span><b>Encuentra</b><small>el peligro</small></div><div><span class="hi">${Q_ICON}</span><b>Decide</b><small>qué hacer</small></div><div><span class="hi">${STAR}</span><b>Gana</b><small>puntos</small></div></div>
+  <div class="fld"><label for="nm">Nombre y apellido</label><input id="nm" type="text" maxlength="60" autocomplete="name" value="${esc(S.name)}" placeholder="Ej. Juan Pérez" aria-required="true"></div>
+  <div class="fld"><label for="dni">DNI</label><input id="dni" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" value="${esc(S.dni)}" placeholder="8 dígitos" aria-required="true"></div>
+  <p class="ferr" id="ferr" role="alert" hidden></p>
+  <div class="row"><button class="btn" id="go">Empezar</button></div></div>`;
+}
+function secImg(s,i,cls){ return `<div class="${cls||"img"}" style="background:${TINT[i%TINT.length]}"><svg viewBox="0 0 120 120" role="img" aria-label="${esc(s.title)}">${IC[s.ic]}</svg></div>`; }
+const P2TILE=`<div class="tl p2">${secImg({title:"Parte 2",ic:"puesto"},4)}<span class="st f2">Parte 2</span><div class="tx"><b>Según tu puesto</b><small>Peligros propios de tu trabajo</small></div></div>`;
+function introView(){
+  const s=sec();
+  const tiles=S.secs.map((x,i)=>`<div class="tl ${i<S.si?"done":i===S.si?"cur":""}">${secImg(x,i)}${i<S.si?'<span class="st ok" aria-label="Completada">\u2713</span>':i===S.si?'<span class="st now">Ahora</span>':`<span class="st n">${i+1}</span>`}<div class="tx"><b>${esc(x.title)}</b><small>${x.cases.length} ${x.cases.length===1?"caso":"casos"}</small></div></div>`).join("");
+  return `<div class="card hero">${secImg(s,S.si,"himg")}<div class="htx"><div class="eyebrow">${S.phase===1?"Parte 1 · Peligros de todos":"Parte 2 · "+esc(S.puesto.name)}</div><h2>Sección ${S.si+1}: ${esc(s.title)}</h2><p>${esc(s.sub)} ${s.cases.length} ${s.cases.length===1?"caso":"casos"}.</p><button class="btn" id="begin">Comenzar sección</button></div></div>
+  <h3 style="margin:20px 0 10px">Tu recorrido</h3><div class="tiles">${tiles}${S.phase===1?P2TILE:""}</div>`;
+}
+function secOk(si){ let n=0; S.secs[si].cases.forEach((_,q)=>{const cs=S.hist[S.phase+"|"+(S.puesto?S.puesto.name:"")+"|"+si+"|"+q]; if(cs&&cs.ok) n++;}); return n; }
+function summaryView(){
+  const n=sec().cases.length, ok=secOk(S.si);
+  const last=S.si===S.secs.length-1;
+  const msg=ok===n?"Sección perfecta. Todo a la primera.":ok>=n/2?"Buen avance.":"Cada caso incluye los controles del IPERC.";
+  const hero=`<div class="card hero">${secImg(sec(),S.si,"himg")}<div class="htx"><div class="eyebrow">Sección completada</div><h2>${esc(sec().title)}</h2><div class="score" style="font-size:2.8rem">${ok} de ${n}</div><p style="margin:6px 0 ${last?0:14}px">respuestas correctas a la primera. ${msg}</p>${last?"":'<button class="btn" id="secnext">Siguiente sección</button>'}</div></div>`;
+  if(last&&S.phase===1) return hero+`<div class="phasecard"><div class="ptag">Parte 1 completada</div><h2>Ahora, tu puesto</h2><p>Elige tu puesto de trabajo y practica con los peligros que más te tocan.</p><button class="btn phase" id="secnext">Elegir mi puesto <span aria-hidden="true">→</span></button></div>`;
+  if(last) return hero+`<div class="phasecard"><div class="ptag">Parte 2 completada</div><h2>Terminaste el recorrido</h2><p>Mira cómo te fue y qué debes recordar en tu puesto.</p><button class="btn phase" id="secnext">Ver mi resultado <span aria-hidden="true">→</span></button></div>`;
+  return hero;
+}
+function modalHtml(){
+  const c=cur(), cs=S.cs; let body;
+  if(c.t==="haz"){
+    const h=H[c.hid];
+    const lv=(S.phase===2&&S.puesto)?(S.puesto.items.find(x=>x[0]===h.id)||[0,h.lvl])[1]:h.lvl;
+    body=`<h3>${esc(h.t)}</h3><p>${esc(QA[h.t][3])}</p><div class="learn"><p class="q"><b>Qué puede pasar:</b> ${esc(h.q)}</p><b>Controles recomendados</b><ul>${h.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul><div class="meta">${pill(lv)}<span>${h.n===NP?"Está en los 16 puestos":"Aplica a "+h.n+" de "+NP+" puestos"}</span></div></div>`;
+  } else {
+    const hi=RANK[c.la]<RANK[c.lb]?c.a:c.b; body=`<p>Para el IPERC, <b>${esc(H[hi].t)}</b> es el más grave de los dos.</p><div class="vsr"><div><b>${esc(H[c.a].t)}</b>${pill(c.la)}</div><div><b>${esc(H[c.b].t)}</b>${pill(c.lb)}</div></div><p>Los peligros con nivel más alto se atienden primero.</p>`;
+  }
+  return `<div class="modal-bg" id="mbg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><button class="mx" id="mclose" aria-label="Cerrar explicación">×</button><div class="mok" id="mt">${cs.first?"¡Correcto! Sumas un punto":"Correcto"}</div>${body}<div class="row"><button class="btn" id="mcont">Continuar</button></div></div></div>`;
+}
+function caseView(){
+  const cs=S.cs, c=cur(), isH=c.t==="haz", h=isH?H[c.hid]:null;
+  const area=isH?(S.phase===1?AREA_OF[h.act]:h.act):"Comparación";
+  let out=`<div class="eyebrow">${esc(area)}</div>`;
+  if(isH){
+    if(cs.scene){
+      const sc=SCENES[cs.scene];
+      if(cs.step==="find") out+=mission("Tu misión",sc.prompt,MIS_ICON)+(cs.msg?`<div class="fb no" role="status">${esc(cs.msg)}</div>`:"");
+      out+=`<div class="scene ${cs.step==="find"?"":"small"}"><svg viewBox="0 0 600 340" role="group" aria-label="Escena de inspección">${sc.svg()}</svg></div>`;
+    } else out+=`<div class="scene">${banner(KIND[h.t],c.hid)}</div>`;
+  } else {
+    out+=`<div class="card"><h2>¿Cuál de los dos es más grave?</h2><p style="margin:0 0 12px">Estos dos peligros están en la matriz IPERC de tu puesto. El IPERC le asigna a cada uno un nivel de riesgo antes de aplicar controles. Elige el que tiene el nivel más alto.</p><div class="scale"><span class="pill IN">Intolerable</span><span class="arr" aria-hidden="true">→</span><span class="pill IM">Importante</span><span class="arr" aria-hidden="true">→</span><span class="pill MO">Moderado</span><span class="sc-note">de más grave a menos grave</span></div></div>`;
+  }
+  if(cs.step==="q"){
+    if(isH) out+=`<div class="situ"><button class="btn alt round" id="spk" aria-label="Escuchar la situación">${SPK}</button><div class="eyebrow">Situación</div><p class="scen">${esc(QA[h.t][0])}</p></div>`;
+    out+=mission(isH?"Tu decisión":"Tu misión",isH?"¿Qué haces? Elige la mejor opción.":"Toca el peligro más grave.",Q_ICON);
+    out+=`<div class="opts ${isH?"":"duel"}">${cs.opts.map((o,k)=>`<button class="opt ${cs.done&&o.ok?"good":(cs.wrong.includes(k)?"bad":"")}" data-k="${k}" ${cs.done||cs.wrong.includes(k)?"disabled":""}>${isH?"":`<span class="ltr">${"AB"[k]}</span>`}${esc(o.t)}</button>`).join("")}</div>`;
+    if(cs.msg&&!cs.done) out+=`<div class="fb no" role="status"><b>No es la mejor opción.</b>${esc(cs.msg)}</div>`;
+    if(cs.done){
+      const last=S.qi===sec().cases.length-1;
+      out+=`<div class="row"><button class="btn alt" id="reopen">Ver explicación</button><button class="btn" id="nx">${last?"Terminar sección":"Siguiente caso"}</button></div>`;
+      if(S.modal) out+=modalHtml();
+    }
+  }
+  return out;
+}
+function pickView(){
+  const cards=P.map((p,i)=>`<button class="pk" data-p="${i}"><b>${esc(p.name)}</b></button>`).join("");
+  return `<div class="card"><div class="eyebrow">Parte 2</div><h2>¿Cuál es tu puesto?</h2><p style="margin:0">Elígelo y practica con los peligros que más te tocan.</p></div><div class="pick">${cards}</div>`;
+}
+function buildPhase2(pi){
+  Object.keys(S.hist).forEach(k=>{if(k.startsWith("2|")) delete S.hist[k];});
+  const p=P[pi]; S.puesto=p; S.phase=2;
+  const secs=[];
+  ["Entre ciudades","Muelles","Espacios públicos","Limpieza"].forEach(a=>{
+    const ids=p.items.filter(x=>H[x[0]].n<14&&H[x[0]].act===a).map(x=>x[0]).sort((x,y)=>x-y);
+    if(ids.length) secs.push({title:ACT_SEC[a][0],sub:ACT_SEC[a][1],ic:ACT_SEC[a][2],cases:ids.map(hid=>({t:"haz",hid}))});
+  });
+  const nspec=secs.reduce((a,s)=>a+s.cases.length,0);
+  const items=p.items.slice(), pairs=[];
+  for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++) if(items[i][1]!==items[j][1]&&RANK[items[i][1]]!==undefined&&RANK[items[j][1]]!==undefined) pairs.push([items[i],items[j]]);
+  const want=nspec<4?4:2;
+  const duels=shuffle(pairs).slice(0,want).map(([a,b])=>({t:"duel",a:a[0],b:b[0],la:a[1],lb:b[1]}));
+  secs.push({title:"¿Cuál es más grave?",sub:"Compara dos peligros de tu matriz y elige el de nivel más alto.",ic:"balanza",cases:duels});
+  S.secs=secs; S.si=0; S.qi=0; S.view="intro";
+}
+function resultView(){
+  const total=S.log.length, ok=S.log.filter(x=>x.ok).length, pct=Math.round(ok/total*100);
+  const rank=pct>=85?"Inspector experto":pct>=60?"Inspector":"Inspector en formación";
+  const areas={}; S.log.forEach(x=>{(areas[x.area]=areas[x.area]||{ok:0,n:0}); areas[x.area].n++; if(x.ok) areas[x.area].ok++;});
+  const bars=Object.keys(areas).map(a=>{const v=areas[a]; return `<div class="bar"><span>${esc(a)}</span><span class="tr"><i style="width:${Math.round(v.ok/v.n*100)}%"></i></span><span>${v.ok}/${v.n}</span></div>`;}).join("");
+  const its=S.puesto.items.map(([id,l])=>({h:H[id],l})).sort((a,b)=>RANK[a.l]-RANK[b.l]);
+  const cnt=l=>its.filter(x=>x.l===l).length;
+  const gen=its.filter(x=>x.h.n>=14).length;
+  const intol=its.filter(x=>x.l==="IN");
+  const nm=S.name.trim();
+  return `<div class="card"><div class="eyebrow">Resultado${nm?" de "+esc(nm):""}</div>${S.dni?`<div class="dnil">DNI ${esc(S.dni)}</div>`:""}<div class="score">${pct}%</div><h2 style="margin-top:8px">${rank}</h2>
+  <p>Acertaste a la primera ${ok} de ${total} casos. Tu puesto: <b>${esc(S.puesto.name)}</b>.</p>
+  <h3 style="margin-top:14px">Por sección</h3><div class="bars">${bars}</div></div>
+  <div class="card" style="margin-top:14px"><h2>Los peligros de tu puesto</h2>
+  <div class="kp"><div><b>${its.length}</b><span>peligros en total</span></div><div><b>${cnt("IN")}</b><span>Muy graves</span></div><div><b>${cnt("IM")}</b><span>Graves</span></div><div><b>${its.length-cnt("IN")-cnt("IM")}</b><span>Otros</span></div></div>
+  <p style="margin-top:12px;color:var(--muted)">${gen} de tus peligros son transversales y ${its.length-gen} son por grupo o propios de tu puesto.${N1-gen>0?" Hay "+(N1-gen)+" peligros transversales del juego que no figuran en tu matriz.":""}</p>
+  <h3>Los más graves de tu puesto</h3><div class="hl">${intol.map(x=>`<div><div class="t">${esc(x.h.t)} ${pill("IN")}</div><details><summary>Ver controles</summary><ul>${x.h.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></details></div>`).join("")}</div></div>
+  <div class="row"><button class="btn" id="change">Probar otro puesto</button><button class="btn alt" id="again">Jugar de nuevo</button></div>`;
+}
+
+/* ---- Guardado de avance (localStorage, un registro por DNI) ---- */
+const SKEY="detectives-seguridad:v1:", LAST="detectives-seguridad:ultimo";
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function saveProgress(){
+  if(!S.dni||!S.name||!S.secs.length) return;
+  let view=S.view;
+  if(view==="start"){ if(!S.resume) return; view=S.resume; }
+  const snap={v:1,t:Date.now(),name:S.name,dni:S.dni,pts:S.pts,phase:S.phase,si:S.si,qi:S.qi,view,log:S.log,hist:S.hist,
+    secs:S.secs,secs1:S.phase===1?null:S.secs1,p1len:S.p1len,p1pts:S.p1pts,secLog:S.secLog,
+    pi:S.puesto?P.indexOf(S.puesto):-1,snd:SND};
+  if(lsSet(SKEY+S.dni,JSON.stringify(snap))) lsSet(LAST,S.dni);
+}
+function readSave(dni){
+  const raw=lsGet(SKEY+dni); if(!raw) return null;
+  try{ const d=JSON.parse(raw); return d&&d.v===1&&d.dni===dni&&Array.isArray(d.secs)?d:null; }catch(e){ return null; }
+}
+function applySave(d){
+  S.name=d.name; S.dni=d.dni; S.pts=d.pts; S.phase=d.phase; S.si=d.si; S.qi=d.qi; S.log=d.log; S.hist=d.hist;
+  S.secs=d.secs; S.secs1=d.phase===1?d.secs:d.secs1; S.p1len=d.p1len; S.p1pts=d.p1pts; S.secLog=d.secLog;
+  S.puesto=d.pi>=0?P[d.pi]:null; if(typeof d.snd==="boolean") SND=d.snd;
+  S.modal=false; S.fresh=false;
+  if(d.view==="play") newCase();
+  S.view=d.view; S.resume=null;
+}
+(function(){ const last=lsGet(LAST); const d=last&&readSave(last); if(d){ S.name=d.name; S.dni=d.dni; S.resume={saved:d}; } })();
+function render(){
+  const m=$("#main");
+  m.innerHTML=S.view==="start"?startView():S.view==="intro"?introView():S.view==="play"?caseView():S.view==="summary"?summaryView():S.view==="pick"?pickView():resultView();
+  headUpdate(); bind(); saveProgress();
+}
+function closeModal(){ S.modal=false; render(); const n=$("#nx"); if(n) n.focus(); }
+function bind(){
+  const g=$("#go"); if(g) g.onclick=()=>{
+    const nv=($("#nm").value||"").trim().replace(/\s+/g," "), dv=($("#dni").value||"").trim(), er=$("#ferr");
+    const bad=(m,id)=>{er.textContent=m; er.hidden=false; $(id).focus();};
+    if(nv.length<5||!/\S+\s+\S+/.test(nv)) return bad("Escribe tu nombre y apellido.","#nm");
+    if(!/^\d{8}$/.test(dv)) return bad("Escribe tu DNI de 8 números.","#dni");
+    if(!S.fresh){ const sv=readSave(dv); if(sv){ applySave(sv); render(); window.scrollTo({top:0}); return; } }
+    S.name=nv; S.dni=dv; S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
+  const fr=$("#fresh"); if(fr) fr.onclick=()=>{S.fresh=true; render();};
+  const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
+  ["#nm","#dni"].forEach(id=>{const el=$(id); if(el) el.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};});
+  const dn=$("#dni"); if(dn) dn.oninput=()=>{dn.value=dn.value.replace(/\D/g,"").slice(0,8);};
+  const bg=$("#begin"); if(bg) bg.onclick=()=>{S.qi=0; S.secLog=S.log.length; newCase(); S.view="play"; render(); window.scrollTo({top:0});};
+  const sn=$("#secnext"); if(sn) sn.onclick=()=>{
+    if(S.si<S.secs.length-1){S.si++; S.view="intro";}
+    else if(S.phase===1){S.p1len=S.log.length; S.p1pts=S.pts; S.view="pick";}
+    else S.view="result";
+    render(); window.scrollTo({top:0});};
+  document.querySelectorAll(".hot").forEach(h=>{ const act=()=>tapHot(h); h.addEventListener("click",act); h.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();act();}}); });
+  document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>tapOpt(+b.dataset.k));
+  const nx=$("#nx"); if(nx) nx.onclick=next;
+  const ro=$("#reopen"); if(ro) ro.onclick=()=>{S.modal=true; render();};
+  const mc=$("#mclose"), mt=$("#mcont"), mb=$("#mbg");
+  if(mc) mc.onclick=closeModal; if(mt) mt.onclick=closeModal;
+  if(mb){ mb.onclick=e=>{ if(e.target===mb) closeModal(); }; if(mt) mt.focus(); }
+  document.querySelectorAll(".pk").forEach(b=>b.onclick=()=>{S.log=S.log.slice(0,S.p1len); S.pts=S.p1pts; buildPhase2(+b.dataset.p); render(); window.scrollTo({top:0});});
+  const ch=$("#change"); if(ch) ch.onclick=()=>{S.view="pick"; render(); window.scrollTo({top:0});};
+  const ag=$("#again"); if(ag) ag.onclick=()=>{S.fresh=true; S.resume=null; S.view="start"; render(); window.scrollTo({top:0});};
+  const sp=$("#spk"); if(sp) sp.onclick=()=>{const c=cur(); if(c.t==="haz") speak(QA[H[c.hid].t][0]+" ¿Qué haces? "+S.cs.opts.map(o=>o.t).join(". "));};
+  if(S.view==="play"&&S.cs&&S.cs.scene&&S.cs.step==="q"){ const sc=SCENES[S.cs.scene]; const id=Object.keys(sc.hot).find(k=>sc.hot[k].ok); const f=document.querySelector('.hot[data-id="'+id+'"]'); if(f) f.classList.add("found"); }
+}
+function tapHot(el){
+  const cs=S.cs; if(!cs||cs.step!=="find") return;
+  const sc=SCENES[cs.scene], id=el.dataset.id, h=sc.hot[id];
+  if(h.ok){ cs.step="q"; cs.msg=null; render(); const a=document.querySelector(".situ"); if(a&&a.scrollIntoView) a.scrollIntoView({behavior:"smooth",block:"start"}); }
+  else { cs.first=false; cs.msg=h.fb; render(); const g=document.querySelector('.hot[data-id="'+id+'"]'); if(g) g.classList.add("shake"); }
+}
+function tapOpt(k){
+  const cs=S.cs; if(!cs||cs.done) return;
+  const o=cs.opts[k], c=cur();
+  if(o.ok){
+    cs.done=true; cs.msg=null; S.modal=true;
+    const ok=cs.first&&cs.wrong.length===0;
+    if(ok) S.pts++;
+    cs.ok=ok;
+    S.log.push({area:sec().title,ok});
+    chime();
+  } else { cs.wrong.push(k); cs.first=false; cs.msg=c.t==="haz"?"Esa medida no controla el peligro o es incompleta. Prueba con otra.":"Ese tiene un nivel menor. Prueba con el otro."; }
+  render();
+}
+function next(){
+  if(S.qi<sec().cases.length-1){ S.qi++; newCase(); S.view="play"; }
+  else S.view="summary";
+  render(); window.scrollTo({top:0});
+}
+function back(){
+  if(S.modal) return;
+  const v=S.view;
+  if(v==="play"){ if(S.qi>0){S.qi--; newCase();} else S.view="intro"; }
+  else if(v==="summary"){ S.qi=sec().cases.length-1; newCase(); S.view="play"; }
+  else if(v==="intro"){ if(S.si>0){S.si--; S.view="summary";} else if(S.phase===1){S.resume="intro"; S.view="start";} else S.view="pick"; }
+  else if(v==="pick"){ S.phase=1; S.puesto=null; S.secs=S.secs1; S.si=S.secs.length-1; S.view="summary"; }
+  else if(v==="result"){ S.si=S.secs.length-1; S.view="summary"; }
+  render(); window.scrollTo({top:0});
+}
+$("#back").onclick=back;
+$("#home").onclick=()=>{ S.fresh=false; if(S.view!=="start"){ S.resume=S.view; } S.view="start"; render(); window.scrollTo({top:0}); };
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.modal) closeModal(); });
+$("#snd").onclick=()=>{SND=!SND; if(SND) chime(); headUpdate();};
+render();
+</script>
+
+</body>
+</html>
