@@ -208,7 +208,7 @@ details ul{margin:8px 0 0;padding-left:20px}
   <div class="hr"><button class="snd" id="snd" aria-pressed="true" aria-label="Sonido activado"></button><div class="stars" id="starsbox" aria-live="polite"></div></div>
 </header>
 <div class="prog" id="prog" hidden><div class="prog-top"><span id="plabel"></span><span id="pcount"></span></div><div class="track" aria-hidden="true"><i id="pfill"></i></div></div>
-<div class="navrow" id="navrow" hidden><button class="nv" id="back" type="button"><span aria-hidden="true">←</span> Atrás</button><button class="nv" id="home" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Inicio</button></div>
+<div class="navrow" id="navrow" hidden><button class="nv" id="back" type="button"><span aria-hidden="true">←</span><span id="back-label">Atrás</span></button><button class="nv" id="home" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Inicio</button></div>
 <main id="main" tabindex="-1"></main>
 </div>
 
@@ -464,6 +464,7 @@ function newCase(){
 }
 function headUpdate(){
   $("#starsbox").innerHTML=STAR+"<span>"+S.pts+"</span>";
+  $("#back-label").textContent=S.view==="intro"?"Salir":"Atrás";
   const pr=$("#prog"); $("#navrow").hidden=(S.view==="start");
   if(S.completed&&S.view==="intro"){
     pr.hidden=false;
@@ -789,11 +790,10 @@ function continueCase(){
 }
 function back(){
   if(S.modal) return;
-  if(S.completed&&S.view==="intro") return;
   const v=S.view;
   if(v==="play"){ if(S.qi>0){S.qi--; newCase();} else S.view="intro"; }
   else if(v==="summary"){ S.qi=sec().cases.length-1; newCase(); S.view="play"; }
-  else if(v==="intro"){ if(S.si>0){S.si--; S.view="summary";} else if(S.phase===1){S.resume="intro"; S.view="start";} else S.view="pick"; }
+  else if(v==="intro"){ S.resume="intro"; S.view="start"; }
   else if(v==="pick"){ S.phase=1; S.puesto=null; S.secs=S.secs1; S.si=S.secs.length-1; S.view="summary"; }
   else if(v==="result"){ S.si=S.secs.length-1; S.view="summary"; }
   render(); window.scrollTo({top:0});
