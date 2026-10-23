@@ -493,6 +493,12 @@ function headUpdate(){
     $("#plabel").textContent="Actividad completada";
     $("#pcount").textContent="100% · "+progressStage(100);
     $("#pfill").style.width="100%";
+  } else if(S.view==="home"){
+    pr.hidden=false;
+    const pct=journeyPct();
+    $("#plabel").textContent="Inicio · Recorrido de la Parte 1";
+    $("#pcount").textContent=pct+"% · "+progressStage(pct);
+    $("#pfill").style.width=pct+"%";
   } else if(["intro","play","summary","result"].includes(S.view)){
     pr.hidden=false;
     const pct=journeyPct();
@@ -522,6 +528,11 @@ function completedView(){
   const nm=S.name.trim().split(" ")[0];
   return `<div class="card hero celebrate">${secImg(S.secs[0],0,"himg")}<div class="htx"><div class="eyebrow">\u00a1Actividad completada!</div><h2>\u00a1Felicitaciones${nm?", "+esc(nm):""}!</h2><div class="score" style="font-size:3rem">${pct}%</div><h3 style="margin-top:8px">${rank}</h3><p style="margin:8px 0 0">Completaste todas las actividades. Acertaste a la primera ${ok} de ${total} casos.</p></div></div>
   <h3 style="margin:20px 0 10px">Tu recorrido completado</h3><div class="tiles">${tiles}</div>`;
+}
+function part1HomeView(){
+  const secs=S.secs1||S.secs;
+  const tiles=secs.map((x,i)=>`<div class="tl done">${secImg(x,i)}<span class="st ok" aria-label="Completada">\u2713</span><div class="tx"><b>${esc(x.title)}</b><small>${x.cases.length} ${x.cases.length===1?"caso":"casos"}</small></div></div>`).join("");
+  return `<div class="card hero"><div class="himg">${secImg(secs[0],0)}</div><div class="htx"><div class="eyebrow">Parte 1 · Peligros de todos</div><h2>Tu recorrido de la Parte 1</h2><p>Estas son todas las fichas que completaste antes de elegir tu puesto.</p></div></div><h3 style="margin:20px 0 10px">Todas las fichas</h3><div class="tiles">${tiles}</div>`;
 }
 function introView(){
   if(S.completed){ return completedView(); }
@@ -655,8 +666,8 @@ function applySave(d){
 function continueFromSave(d){
   applySave(d);
   if(d.completed){ S.view="intro"; return; }
-  if(d.view==="result") return;
-  if(d.view==="summary"){
+  if(d.view==="result"||d.view==="home") return;
+  if(d.view==="summary"){ 
     if(S.si<S.secs.length-1){ S.si++; S.qi=0; S.view="intro"; }
     else if(S.phase===1){ S.view="pick"; }
     else S.view="result";
@@ -674,12 +685,13 @@ function goToFichas(){
     else S.view="result";
     return;
   }
+  if(S.phase===2&&!S.completed){ S.view="home"; return; }
   if(S.view!=="intro"&&S.view!=="pick"&&S.view!=="result") S.view="intro";
 }
 (function(){ const last=lsGet(LAST); const d=last&&readSave(last); if(d){ S.name=d.name; S.dni=d.dni; S.resume={saved:d}; } })();
 function render(){
   const m=$("#main");
-  m.innerHTML=S.view==="start"?startView():S.view==="intro"?introView():S.view==="play"?caseView():S.view==="summary"?summaryView():S.view==="pick"?pickView():resultView();
+  m.innerHTML=S.view==="start"?startView():S.view==="home"?part1HomeView():S.view==="intro"?introView():S.view==="play"?caseView():S.view==="summary"?summaryView():S.view==="pick"?pickView():resultView();
   headUpdate(); bind(); saveProgress();
 }
 function closeModal(){ S.modal=false; render(); const n=$("#nx"); if(n) n.focus(); }
@@ -823,6 +835,7 @@ function back(){
   const v=S.view;
   if(v==="play"){ if(S.qi>0){S.qi--; newCase();} else S.view="intro"; }
   else if(v==="summary"){ S.qi=sec().cases.length-1; newCase(); S.view="play"; }
+  else if(v==="home"){ S.view="intro"; }
   else if(v==="intro"){ S.resume="intro"; S.view="start"; }
   else if(v==="pick"){ S.phase=1; S.puesto=null; S.secs=S.secs1; S.si=S.secs.length-1; S.view="summary"; }
   else if(v==="result"){ S.si=S.secs.length-1; S.view="summary"; }
