@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#E8F4FF">
-<meta name="description" content="Juego de seguridad: descubre los peligros de tu puesto de trabajo y practica cómo evitarlos.">
-<title>Detectives de Seguridad</title>
+<meta name="description" content="Peligros a la vista: conoce los peligros de tu puesto.">
+<title>Peligros a la vista</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -204,7 +204,7 @@ details ul{margin:8px 0 0;padding-left:20px}
 
 <div class="wrap">
 <header>
-  <div class="logo"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1B2A5B"/><path d="M8 23a12 12 0 0 1 24 0z" fill="#FFC845"/><rect x="6" y="23" width="28" height="4" rx="2" fill="#FFC845"/><rect x="18" y="9" width="4" height="9" rx="2" fill="#F2563F"/><circle cx="20" cy="30" r="4" fill="#fff"/></svg>Detectives de seguridad</div>
+  <div class="logo"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#1B2A5B"/><path d="M8 23a12 12 0 0 1 24 0z" fill="#FFC845"/><rect x="6" y="23" width="28" height="4" rx="2" fill="#FFC845"/><rect x="18" y="9" width="4" height="9" rx="2" fill="#F2563F"/><circle cx="20" cy="30" r="4" fill="#fff"/></svg>Peligros a la vista</div>
   <div class="hr"><button class="snd" id="snd" aria-pressed="true" aria-label="Sonido activado"></button><div class="stars" id="starsbox" aria-live="polite"></div></div>
 </header>
 <div class="prog" id="prog" hidden><div class="prog-top"><span id="plabel"></span><span id="pcount"></span></div><div class="track" aria-hidden="true"><i id="pfill"></i></div></div>
@@ -217,6 +217,13 @@ const DATA = {"H": [{"id": 0, "step": "oficina", "act": "Oficina", "t": "Piso mo
 const H = DATA.H, P = DATA.P, NP = P.length;
 const LVL = {IN:"Intolerable (I)", IM:"Importante (II)", MO:"Moderado (III)", TO:"Tolerable (IV)", TR:"Trivial (V)"};
 const RANK = {IN:0,IM:1,MO:2,TO:3,TR:4};
+function progressStage(pct){
+  if(pct===100) return "Ya conoces todo tu IPERC";
+  if(pct>=75) return "Te falta poco para conocer tu puesto";
+  if(pct>=50) return "Vas a mitad de tu matriz";
+  if(pct>=25) return "Ya reconoces los peligros comunes";
+  return "Empezando a leer tu IPERC";
+}
 const STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z" fill="#FFC845" stroke="#C99200" stroke-width="1.2" stroke-linejoin="round"/></svg>';
 const SPK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const hot=(id,x,y,w,h,label,inner)=>`<g class="hot" data-id="${id}" tabindex="0" role="button" aria-label="${label}">${inner}<rect class="hit" x="${x}" y="${y}" width="${w}" height="${h}" rx="16"/></g>`;
@@ -487,7 +494,7 @@ function headUpdate(){
 function startView(){
   if(S.admin){ return adminView(); }
   const hasResume=!!(S.resume&&S.resume.saved);
-  return `<div class="card"><div class="eyebrow">Juego de seguridad</div><h1>¿Sabrías qué hacer?</h1><p class="lead">Descubre los peligros de tu trabajo y practica cómo evitarlos.</p>
+  return `<div class="card"><div class="eyebrow">Juego de seguridad</div><h1>¿Sabrías qué hacer?</h1><p class="lead">Conoce los peligros de tu puesto</p>
   <div class="how"><div><span class="hi">${MIS_ICON}</span><b>Encuentra</b><small>el peligro</small></div><div><span class="hi">${Q_ICON}</span><b>Decide</b><small>qué hacer</small></div><div><span class="hi">${STAR}</span><b>Gana</b><small>puntos</small></div></div>
   <div class="fld"><label for="dni">Ingresa tu DNI</label><input id="dni" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" value="${esc(S.dni)}" placeholder="8 dígitos" aria-required="true"></div>
   <p class="ferr" id="ferr" role="alert" hidden></p>
@@ -499,7 +506,7 @@ function secImg(s,i,cls){ return `<div class="${cls||"img"}" style="background:$
 const P2TILE=`<div class="tl p2">${secImg({title:"Parte 2",ic:"puesto"},4)}<span class="st f2">Parte 2</span><div class="tx"><b>Según tu puesto</b><small>Peligros propios de tu trabajo</small></div></div>`;
 function completedView(){
   const total=S.log.length,ok=S.log.filter(x=>x.ok).length,pct=Math.round(ok/total*100);
-  const rank=pct>=85?"Inspector experto":pct>=60?"Inspector":"Inspector en formacion";
+  const rank=progressStage(pct);
   const tiles=S.secs.map((x,i)=>`<div class="tl done">${secImg(x,i)}<span class="st ok" aria-label="Completada">\u2713</span><div class="tx"><b>${esc(x.title)}</b><small>${x.cases.length} ${x.cases.length===1?"caso":"casos"}</small></div></div>`).join("");
   const nm=S.name.trim().split(" ")[0];
   return `<div class="card hero celebrate">${secImg(S.secs[0],0,"himg")}<div class="htx"><div class="eyebrow">\u00a1Actividad completada!</div><h2>\u00a1Felicitaciones${nm?", "+esc(nm):""}!</h2><div class="score" style="font-size:3rem">${pct}%</div><h3 style="margin-top:8px">${rank}</h3><p style="margin:8px 0 0">Completaste todas las actividades. Acertaste a la primera ${ok} de ${total} casos.</p></div></div>
@@ -580,7 +587,7 @@ function buildPhase2(pi){
 }
 function resultView(){
   const total=S.log.length, ok=S.log.filter(x=>x.ok).length, pct=Math.round(ok/total*100);
-  const rank=pct>=85?"Inspector experto":pct>=60?"Inspector":"Inspector en formación";
+  const rank=progressStage(pct);
   const areas={}; S.log.forEach(x=>{(areas[x.area]=areas[x.area]||{ok:0,n:0}); areas[x.area].n++; if(x.ok) areas[x.area].ok++;});
   const bars=Object.keys(areas).map(a=>{const v=areas[a]; return `<div class="bar"><span>${esc(a)}</span><span class="tr"><i style="width:${Math.round(v.ok/v.n*100)}%"></i></span><span>${v.ok}/${v.n}</span></div>`;}).join("");
   const its=S.puesto.items.map(([id,l])=>({h:H[id],l})).sort((a,b)=>RANK[a.l]-RANK[b.l]);
