@@ -623,6 +623,7 @@ function applySave(d){
 }
 function continueFromSave(d){
   applySave(d);
+  if(d.completed){ S.view="intro"; return; }
   if(d.view==="result") return;
   if(d.view==="summary"){
     if(S.si<S.secs.length-1){ S.si++; S.qi=0; S.view="intro"; }
@@ -693,7 +694,7 @@ function bind(){
   const sl=$("#seclater"); if(sl) sl.onclick=()=>{S.resume="summary"; S.view="start"; render(); window.scrollTo({top:0});};
   document.querySelectorAll(".pk").forEach(b=>b.onclick=()=>{S.log=S.log.slice(0,S.p1len); S.pts=S.p1pts; buildPhase2(+b.dataset.p); render(); window.scrollTo({top:0});});
   const ch=$("#change"); if(ch) ch.onclick=()=>{S.view="pick"; render(); window.scrollTo({top:0});};
-  const tm=$("#terminar"); if(tm) tm.onclick=()=>{ tm.disabled=true; bigFanfare(); S.completed=true; saveProgress(); setTimeout(()=>{ S.view="intro"; render(); window.scrollTo({top:0}); },2000); };
+  const tm=$("#terminar"); if(tm) tm.onclick=()=>{ tm.disabled=true; bigFanfare(); S.completed=true; S.secs=[...(S.secs1||S.secs),...S.secs]; saveProgress(); setTimeout(()=>{ S.view="intro"; render(); window.scrollTo({top:0}); },2000); };
   const sp=$("#spk"); if(sp) sp.onclick=()=>{const c=cur(); if(c.t==="haz") speak(QA[H[c.hid].t][0]+" ¿Qué haces? "+S.cs.opts.map(o=>o.t).join(". "));};
   if(S.view==="play"&&S.cs&&S.cs.scene&&S.cs.step==="q"){ const sc=SCENES[S.cs.scene]; const id=Object.keys(sc.hot).find(k=>sc.hot[k].ok); const f=document.querySelector('.hot[data-id="'+id+'"]'); if(f) f.classList.add("found"); }
 }
