@@ -376,7 +376,7 @@ const SEC1=[
 const ACT_SEC={"Entre ciudades":["Viajes por carretera","Tránsito, robos y protestas durante la ruta.","auto"],"Muelles":["Muelles pesqueros","Caídas, agua, clima y sol en las instalaciones.","muelle"],"Espacios públicos":["Limpieza en espacios públicos","Sol, robos, alimentos y residuos punzocortantes.","sol"],"Limpieza":["Labores de limpieza","Químicos, esfuerzo, riesgo biológico, polvo y trabajo en solitario.","quimico"]};
 const N1=SEC1.reduce((a,s)=>a+s.ids.length,0);
 const ADMIN_DNI="40667929";
-const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,admin:false,adminData:null,adminMsg:null,adminErr:null};
+const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,completed:false,admin:false,adminData:null,adminMsg:null,adminErr:null};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
@@ -414,6 +414,32 @@ function fanfare(){
     });
   }catch(e){}
 }
+function bigFanfare(){
+  if(!SND) return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    const t=AC.currentTime;
+    [[523.25,0],[659.25,.1],[783.99,.2],[1046.5,.3]].forEach(([f,d])=>{
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type="triangle";o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+d);g.gain.linearRampToValueAtTime(.22,t+d+.03);g.gain.exponentialRampToValueAtTime(.001,t+d+.45);
+      o.connect(g);g.connect(AC.destination);o.start(t+d);o.stop(t+d+.5);
+    });
+    [[523.25,.55],[659.25,.55],[783.99,.55],[1046.5,.55],[1318.5,.7],[1568,.7],[1046.5,.7]].forEach(([f,d],i)=>{
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type="sine";o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+d);g.gain.linearRampToValueAtTime(.26,t+d+.04);g.gain.exponentialRampToValueAtTime(.001,t+d+.75);
+      o.connect(g);g.connect(AC.destination);o.start(t+d);o.stop(t+d+.8);
+    });
+    [[1046.5,1.5],[1318.5,1.5],[1568,1.5]].forEach(([f,d])=>{
+      const o=AC.createOscillator(),g=AC.createGain();
+      o.type="sine";o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+d);g.gain.linearRampToValueAtTime(.3,t+d+.06);g.gain.exponentialRampToValueAtTime(.001,t+d+1.3);
+      o.connect(g);g.connect(AC.destination);o.start(t+d);o.stop(t+d+1.4);
+    });
+  }catch(e){}
+}
 const SND_ON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const SND_OFF='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="currentColor"/><path d="M16 9l6 6M22 9l-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
 const MIS_ICON='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="M15 15l6 6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
@@ -439,7 +465,12 @@ function newCase(){
 function headUpdate(){
   $("#starsbox").innerHTML=STAR+"<span>"+S.pts+"</span>";
   const pr=$("#prog"); $("#navrow").hidden=(S.view==="start");
-  if(["intro","play","summary"].includes(S.view)){
+  if(S.completed&&S.view==="intro"){
+    pr.hidden=false;
+    $("#plabel").textContent="Actividad completada";
+    $("#pcount").textContent="";
+    $("#pfill").style.width="100%";
+  } else if(["intro","play","summary"].includes(S.view)){
     pr.hidden=false;
     const total=S.secs.reduce((a,s)=>a+s.cases.length,0);
     const done=S.secs.slice(0,S.si).reduce((a,s)=>a+s.cases.length,0)+(S.view==="play"?S.qi:S.view==="summary"?sec().cases.length:0);
@@ -462,7 +493,16 @@ function startView(){
 }
 function secImg(s,i,cls){ return `<div class="${cls||"img"}" style="background:${TINT[i%TINT.length]}"><svg viewBox="0 0 120 120" role="img" aria-label="${esc(s.title)}">${IC[s.ic]}</svg></div>`; }
 const P2TILE=`<div class="tl p2">${secImg({title:"Parte 2",ic:"puesto"},4)}<span class="st f2">Parte 2</span><div class="tx"><b>Según tu puesto</b><small>Peligros propios de tu trabajo</small></div></div>`;
+function completedView(){
+  const total=S.log.length,ok=S.log.filter(x=>x.ok).length,pct=Math.round(ok/total*100);
+  const rank=pct>=85?"Inspector experto":pct>=60?"Inspector":"Inspector en formacion";
+  const tiles=S.secs.map((x,i)=>`<div class="tl done">${secImg(x,i)}<span class="st ok" aria-label="Completada">\u2713</span><div class="tx"><b>${esc(x.title)}</b><small>${x.cases.length} ${x.cases.length===1?"caso":"casos"}</small></div></div>`).join("");
+  const nm=S.name.trim().split(" ")[0];
+  return `<div class="card hero celebrate">${secImg(S.secs[0],0,"himg")}<div class="htx"><div class="eyebrow">\u00a1Actividad completada!</div><h2>\u00a1Felicitaciones${nm?", "+esc(nm):""}!</h2><div class="score" style="font-size:3rem">${pct}%</div><h3 style="margin-top:8px">${rank}</h3><p style="margin:8px 0 0">Completaste todas las actividades. Acertaste a la primera ${ok} de ${total} casos.</p></div></div>
+  <h3 style="margin:20px 0 10px">Tu recorrido completado</h3><div class="tiles">${tiles}</div>`;
+}
 function introView(){
+  if(S.completed){ return completedView(); }
   const s=sec();
   const tiles=S.secs.map((x,i)=>`<div class="tl ${i<S.si?"done":i===S.si?"cur":""}">${secImg(x,i)}${i<S.si?'<span class="st ok" aria-label="Completada">\u2713</span>':i===S.si?'<span class="st now">Ahora</span>':`<span class="st n">${i+1}</span>`}<div class="tx"><b>${esc(x.title)}</b><small>${x.cases.length} ${x.cases.length===1?"caso":"casos"}</small></div></div>`).join("");
   return `<div class="card hero">${secImg(s,S.si,"himg")}<div class="htx"><div class="eyebrow">${S.phase===1?"Parte 1 · Peligros de todos":"Parte 2 · "+esc(S.puesto.name)}</div><h2>Sección ${S.si+1}: ${esc(s.title)}</h2><p>${esc(s.sub)} ${s.cases.length} ${s.cases.length===1?"caso":"casos"}.</p><button class="btn" id="begin">Comenzar sección</button></div></div>
@@ -520,7 +560,7 @@ function pickView(){
 }
 function buildPhase2(pi){
   Object.keys(S.hist).forEach(k=>{if(k.startsWith("2|")) delete S.hist[k];});
-  const p=P[pi]; S.puesto=p; S.phase=2;
+  const p=P[pi]; S.puesto=p; S.phase=2; S.completed=false;
   const secs=[];
   ["Entre ciudades","Muelles","Espacios públicos","Limpieza"].forEach(a=>{
     const ids=p.items.filter(x=>H[x[0]].n<14&&H[x[0]].act===a).map(x=>x[0]).sort((x,y)=>x-y);
@@ -551,7 +591,7 @@ function resultView(){
   <div class="kp"><div><b>${its.length}</b><span>peligros en total</span></div><div><b>${cnt("IN")}</b><span>Muy graves</span></div><div><b>${cnt("IM")}</b><span>Graves</span></div><div><b>${its.length-cnt("IN")-cnt("IM")}</b><span>Otros</span></div></div>
   <p style="margin-top:12px;color:var(--muted)">${gen} de tus peligros son transversales y ${its.length-gen} son por grupo o propios de tu puesto.${N1-gen>0?" Hay "+(N1-gen)+" peligros transversales del juego que no figuran en tu matriz.":""}</p>
   <h3>Los más graves de tu puesto</h3><div class="hl">${intol.map(x=>`<div><div class="t">${esc(x.h.t)} ${pill("IN")}</div><details><summary>Ver controles</summary><ul>${x.h.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></details></div>`).join("")}</div></div>
-  <div class="row"><button class="btn" id="change">Probar otro puesto</button><button class="btn alt" id="again">Jugar de nuevo</button></div>`;
+  <div class="row"><button class="btn alt" id="change">Probar otro puesto</button><button class="btn" id="terminar">Terminar</button></div>`;
 }
 
 /* ---- Guardado de avance (localStorage, un registro por DNI) ---- */
@@ -564,7 +604,7 @@ function saveProgress(){
   if(view==="start"){ if(!S.resume) return; view=S.resume; }
   const snap={v:1,t:Date.now(),name:S.name,dni:S.dni,pts:S.pts,phase:S.phase,si:S.si,qi:S.qi,view,log:S.log,hist:S.hist,
     secs:S.secs,secs1:S.phase===1?null:S.secs1,p1len:S.p1len,p1pts:S.p1pts,secLog:S.secLog,
-    pi:S.puesto?P.indexOf(S.puesto):-1,pn:S.puesto?S.puesto.name:null,snd:SND};
+    pi:S.puesto?P.indexOf(S.puesto):-1,pn:S.puesto?S.puesto.name:null,snd:SND,completed:S.completed};
   if(lsSet(SKEY+S.dni,JSON.stringify(snap))) lsSet(LAST,S.dni);
   if(window._onSaveProgress) window._onSaveProgress(snap);
 }
@@ -576,7 +616,7 @@ function applySave(d){
   S.name=d.name; S.dni=d.dni; S.pts=d.pts; S.phase=d.phase; S.si=d.si; S.qi=d.qi; S.log=d.log; S.hist=d.hist;
   S.secs=d.secs; S.secs1=d.phase===1?d.secs:d.secs1; S.p1len=d.p1len; S.p1pts=d.p1pts; S.secLog=d.secLog;
   S.puesto=d.pi>=0?P[d.pi]:null; if(typeof d.snd==="boolean") SND=d.snd;
-  S.modal=false; S.fresh=false;
+  S.modal=false; S.fresh=false; S.completed=!!d.completed;
   if(d.view==="play") newCase();
   S.view=d.view; S.resume=null;
   if(window._onApplySave) window._onApplySave(d);
@@ -620,7 +660,7 @@ function bind(){
     const enterGame=(nombre)=>{
       S.name=nombre; S.dni=dv;
       if(!S.fresh){ const sv=readSave(dv); if(sv){ if(sv.name!==nombre) sv.name=nombre; continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
-      const startNew=()=>{S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
+      const startNew=()=>{S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.completed=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
       if(S.fresh){ startNew(); return; }
       if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ if(rs.name!==nombre) rs.name=nombre; try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); return; } startNew(); })(); }
       else startNew();
@@ -653,7 +693,7 @@ function bind(){
   const sl=$("#seclater"); if(sl) sl.onclick=()=>{S.resume="summary"; S.view="start"; render(); window.scrollTo({top:0});};
   document.querySelectorAll(".pk").forEach(b=>b.onclick=()=>{S.log=S.log.slice(0,S.p1len); S.pts=S.p1pts; buildPhase2(+b.dataset.p); render(); window.scrollTo({top:0});});
   const ch=$("#change"); if(ch) ch.onclick=()=>{S.view="pick"; render(); window.scrollTo({top:0});};
-  const ag=$("#again"); if(ag) ag.onclick=()=>{S.fresh=true; S.resume=null; S.view="start"; render(); window.scrollTo({top:0});};
+  const tm=$("#terminar"); if(tm) tm.onclick=()=>{ tm.disabled=true; bigFanfare(); S.completed=true; saveProgress(); setTimeout(()=>{ S.view="intro"; render(); window.scrollTo({top:0}); },2000); };
   const sp=$("#spk"); if(sp) sp.onclick=()=>{const c=cur(); if(c.t==="haz") speak(QA[H[c.hid].t][0]+" ¿Qué haces? "+S.cs.opts.map(o=>o.t).join(". "));};
   if(S.view==="play"&&S.cs&&S.cs.scene&&S.cs.step==="q"){ const sc=SCENES[S.cs.scene]; const id=Object.keys(sc.hot).find(k=>sc.hot[k].ok); const f=document.querySelector('.hot[data-id="'+id+'"]'); if(f) f.classList.add("found"); }
 }
@@ -748,6 +788,7 @@ function continueCase(){
 }
 function back(){
   if(S.modal) return;
+  if(S.completed&&S.view==="intro") return;
   const v=S.view;
   if(v==="play"){ if(S.qi>0){S.qi--; newCase();} else S.view="intro"; }
   else if(v==="summary"){ S.qi=sec().cases.length-1; newCase(); S.view="play"; }
