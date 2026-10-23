@@ -612,7 +612,7 @@ function bind(){
   const nx=$("#nx"); if(nx) nx.onclick=next;
   const ro=$("#reopen"); if(ro) ro.onclick=()=>{S.modal=true; render();};
   const mc=$("#mclose"), mt=$("#mcont"), mb=$("#mbg");
-  if(mc) mc.onclick=closeModal; if(mt) mt.onclick=closeModal;
+  if(mc) mc.onclick=closeModal; if(mt) mt.onclick=continueCase;
   if(mb){ mb.onclick=e=>{ if(e.target===mb) closeModal(); }; if(mt) mt.focus(); }
   document.querySelectorAll(".pk").forEach(b=>b.onclick=()=>{S.log=S.log.slice(0,S.p1len); S.pts=S.p1pts; buildPhase2(+b.dataset.p); render(); window.scrollTo({top:0});});
   const ch=$("#change"); if(ch) ch.onclick=()=>{S.view="pick"; render(); window.scrollTo({top:0});};
@@ -643,6 +643,10 @@ function next(){
   if(S.qi<sec().cases.length-1){ S.qi++; newCase(); S.view="play"; }
   else S.view="summary";
   render(); window.scrollTo({top:0});
+}
+function continueCase(){
+  S.modal=false;
+  next();
 }
 function back(){
   if(S.modal) return;
