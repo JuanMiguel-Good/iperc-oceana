@@ -568,6 +568,12 @@ function readSave(dni){
   const raw=lsGet(SKEY+dni); if(!raw) return null;
   try{ const d=JSON.parse(raw); return d&&d.v===1&&d.dni===dni&&Array.isArray(d.secs)?d:null; }catch(e){ return null; }
 }
+function findSaveByName(name){
+  const norm=s=>(s||"").toLowerCase().replace(/\s+/g," ").trim();
+  const target=norm(name); if(!target) return null;
+  for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(!k||!k.startsWith(SKEY)) continue; try{ const d=JSON.parse(localStorage.getItem(k)); if(d&&d.v===1&&norm(d.name)===target) return d; }catch(e){} }
+  return null;
+}
 function applySave(d){
   S.name=d.name; S.dni=d.dni; S.pts=d.pts; S.phase=d.phase; S.si=d.si; S.qi=d.qi; S.log=d.log; S.hist=d.hist;
   S.secs=d.secs; S.secs1=d.phase===1?d.secs:d.secs1; S.p1len=d.p1len; S.p1pts=d.p1pts; S.secLog=d.secLog;
@@ -616,11 +622,17 @@ function bind(){
     if(nv.length<5||!/\S+\s+\S+/.test(nv)) return bad("Escribe tu nombre y apellido.","#nm");
     if(!/^\d{8}$/.test(dv)) return bad("Escribe tu DNI de 8 números.","#dni");
     const nameMatches=sv=>norm(sv.name)===norm(nv);
-    if(!S.fresh){ const sv=readSave(dv); if(sv){ if(!nameMatches(sv)) return bad("El nombre no coincide con el DNI registrado. Verifica tus datos.","#nm"); continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
+    const errDni="El nombre no coincide con el DNI registrado. Verifica tus datos.";
+    if(!S.fresh){ const sv=readSave(dv); if(sv){ if(!nameMatches(sv)) return bad(errDni,"#nm"); continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
     const startNew=()=>{S.name=nv; S.dni=dv; S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
     if(S.fresh){ startNew(); return; }
-    if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ if(norm(rs.name)!==norm(nv)) return bad("El nombre no coincide con el DNI registrado. Verifica tus datos.","#nm"); try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); return; } startNew(); })(); }
-    else startNew();};
+    const checkNameAndStart=()=>{
+      const lm=findSaveByName(nv);
+      if(lm&&lm.dni!==dv) return bad(errDni,"#nm");
+      if(window._checkRemoteSaveByName){ (async()=>{ const rs=await window._checkRemoteSaveByName(nv); if(rs&&rs.dni&&rs.dni!==dv) return bad(errDni,"#nm"); startNew(); })(); }
+      else startNew();};
+    if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ if(norm(rs.name)!==norm(nv)) return bad(errDni,"#nm"); try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); return; } checkNameAndStart(); })(); }
+    else checkNameAndStart();};
   const fr=$("#fresh"); if(fr) fr.onclick=()=>{S.fresh=true; render();};
   const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
   ["#nm","#dni"].forEach(id=>{const el=$(id); if(el) el.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};});
