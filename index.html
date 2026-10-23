@@ -469,14 +469,17 @@ function newCase(){
   }
   S.hist[k]=S.cs;
 }
+const PHASE1_WEIGHT=75, PHASE2_WEIGHT=25;
 const totalCases=secs=>secs.reduce((total,s)=>total+s.cases.length,0);
-function journeyTotal(){
-  if(S.completed) return totalCases(S.secs);
-  return S.phase===2?totalCases(S.secs1)+totalCases(S.secs):totalCases(S.secs);
-}
 function journeyPct(){
-  const total=journeyTotal();
-  return total?Math.round(S.log.length/total*100):0;
+  if(S.completed) return 100;
+  if(S.phase===1){
+    const total=totalCases(S.secs);
+    return total?Math.min(PHASE1_WEIGHT,Math.round(S.log.length/total*PHASE1_WEIGHT)):0;
+  }
+  const phase2Total=totalCases(S.secs);
+  const phase2Done=Math.max(0,S.log.length-(S.p1len||totalCases(S.secs1)));
+  return phase2Total?Math.min(100,PHASE1_WEIGHT+Math.round(phase2Done/phase2Total*PHASE2_WEIGHT)):PHASE1_WEIGHT;
 }
 function headUpdate(){
   $("#starsbox").innerHTML=STAR+"<span>"+S.pts+"</span>";
@@ -492,12 +495,10 @@ function headUpdate(){
     $("#pfill").style.width="100%";
   } else if(["intro","play","summary","result"].includes(S.view)){
     pr.hidden=false;
-    const total=totalCases(S.secs);
-    const done=S.secs.slice(0,S.si).reduce((a,s)=>a+s.cases.length,0)+(S.view==="play"?S.qi:S.view==="summary"?sec().cases.length:0);
     const pct=journeyPct();
     $("#plabel").textContent=S.view==="result"?"Avance total":(S.phase===1?"Parte 1":"Parte 2")+" · Sección "+(S.si+1)+" de "+S.secs.length+" · "+sec().title;
     $("#pcount").textContent=S.phase===1?"Fase 1 · "+pct+"% · "+progressStage(pct)+(S.view==="play"?" · Caso "+(S.qi+1)+" de "+sec().cases.length:""):pct+"% · "+progressStage(pct);
-    $("#pfill").style.width=(S.phase===1?Math.round(done/total*100):pct)+"%";
+    $("#pfill").style.width=pct+"%";
   } else pr.hidden=true;
   $("#snd").innerHTML=SND?SND_ON:SND_OFF; $("#snd").setAttribute("aria-pressed",SND?"true":"false"); $("#snd").setAttribute("aria-label",SND?"Sonido activado":"Sonido desactivado");
 }
@@ -536,7 +537,9 @@ function summaryView(){
   const pct=journeyPct();
   const stage=progressStage(pct);
   let stageNotice="";
-  if(S.phase===2&&stage!==S.stageSeen){
+  if(S.stageSeen===null){
+    S.stageSeen=stage;
+  } else if(stage!==S.stageSeen){
     stageNotice=`<div class="save-note"><b>Nueva etapa:</b>&nbsp;${stage}</div>`;
     S.stageSeen=stage;
   }
@@ -689,7 +692,7 @@ function bind(){
     const enterGame=(nombre)=>{
       S.name=nombre; S.dni=dv;
       if(!S.fresh){ const sv=readSave(dv); if(sv){ if(sv.name!==nombre) sv.name=nombre; continueFromSave(sv); render(); window.scrollTo({top:0}); return; } }
-      const startNew=()=>{S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.completed=false; S.stageSeen=null; S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
+      const startNew=()=>{S.pts=0; S.log=[]; S.phase=1; S.puesto=null; S.hist={}; S.resume=null; S.fresh=false; S.completed=false; S.stageSeen=progressStage(0); S.secs=SEC1.map(s=>({title:s.title,sub:s.sub,ic:s.ic,cases:s.ids.map(hid=>({t:"haz",hid}))})); S.secs1=S.secs; S.si=0; S.qi=0; S.view="intro"; render(); window.scrollTo({top:0});};
       if(S.fresh){ startNew(); return; }
       if(window._checkRemoteSave){ (async()=>{ const rs=await window._checkRemoteSave(dv); if(rs){ if(rs.name!==nombre) rs.name=nombre; try{localStorage.setItem(SKEY+dv,JSON.stringify(rs)); localStorage.setItem(LAST,dv);}catch(e){} continueFromSave(rs); render(); window.scrollTo({top:0}); return; } startNew(); })(); }
       else startNew();
