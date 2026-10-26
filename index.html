@@ -841,14 +841,35 @@ async function adminAddBulk(){
   }catch(e){ S.adminErr="Error de conexión."; render(); }
 }
 /* ---- Observador: estatus de avance (solo lectura) ---- */
+function donutChart(counts){
+  const total=counts.c+counts.p+counts.s;
+  if(total===0) return "";
+  const r=42, sw=16, cx=60, cy=60, R=2*Math.PI*r;
+  const parts=[
+    {n:counts.c, color:"var(--go)", label:"Completado"},
+    {n:counts.p, color:"var(--sun)", label:"En progreso"},
+    {n:counts.s, color:"var(--line)", label:"Sin iniciar"}
+  ].filter(p=>p.n>0);
+  let off=0, arcs="";
+  for(const p of parts){
+    const frac=p.n/total, len=frac*R;
+    arcs+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${p.color}" stroke-width="${sw}" stroke-dasharray="${len} ${R-len}" stroke-dashoffset="${-off}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    off+=len;
+  }
+  const pct=(n)=>total>0?Math.round(n/total*100):0;
+  const legend=parts.map(p=>`<div style="display:flex;align-items:center;gap:6px;font-size:.85rem"><span style="width:12px;height:12px;border-radius:50%;background:${p.color};flex:none"></span>${esc(p.label)} <b>${p.n}</b> (${pct(p.n)}%)</div>`).join("");
+  return `<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin:0 0 20px"><svg viewBox="0 0 120 120" style="width:130px;height:130px;flex:none" aria-hidden="true">${arcs}<text x="${cx}" y="${cy-2}" text-anchor="middle" font-family="var(--font)" font-size="1.3rem" font-weight="700" fill="var(--ink)">${total}</text><text x="${cx}" y="${cy+16}" text-anchor="middle" font-family="var(--font)" font-size=".6rem" fill="var(--muted)">total</text></svg><div style="display:grid;gap:6px">${legend}</div></div>`;
+}
 function observerView(){
   const list=(S.obsData||[]);
+  const counts=list.reduce((a,r)=>{ if(r.completado) a.c++; else if(r.actualizado_en) a.p++; else a.s++; return a; },{c:0,p:0,s:0});
   const rows=list.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${esc(r.dni)}</td><td>${r.completado?"<span class=\"ok\">Completado</span>":r.actualizado_en?"En progreso":"Sin iniciar"}</td><td>${r.puntos!=null?r.puntos:"-"}</td></tr>`).join("");
   return `<div class="card"><div class="eyebrow">Estatus del grupo</div><h1>Avance de participantes</h1>
   <p style="margin:0 0 16px">Consulta el estado de quienes van completando el juego. Esta vista es de solo lectura.</p>
   ${S.obsErr?`<div class="fb no" role="alert">${esc(S.obsErr)}</div>`:""}
+  ${list.length?donutChart(counts):""}
   <h3>Participantes registrados (${list.length})</h3>
-  ${list.length?`<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn alt" id="obsReload">Refrescar</button></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.9rem"><thead><tr style="text-align:left;color:var(--muted);border-bottom:2px solid var(--line)\"><th style=\"padding:8px 6px\">Nombre</th><th style=\"padding:8px 6px\">DNI</th><th style=\"padding:8px 6px\">Estado</th><th style=\"padding:8px 6px\">Puntos</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<p style="color:var(--muted)">Aún no hay participantes registrados.</p><div class="row"><button class="btn alt" id="obsReload">Refrescar</button></div>`}
+  ${list.length?`<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn alt" id="obsReload">Refrescar</button></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.9rem"><thead><tr style="text-align:left;color:var(--muted);border-bottom:2px solid var(--line)"><th style=\"padding:8px 6px\">Nombre</th><th style=\"padding:8px 6px\">DNI</th><th style=\"padding:8px 6px\">Estado</th><th style=\"padding:8px 6px\">Puntos</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<p style="color:var(--muted)">A\u00fan no hay participantes registrados.</p><div class="row"><button class="btn alt" id="obsReload">Refrescar</button></div>`}
   <div class="row" style="margin-top:20px"><button class="btn alt" id="obsExit">Volver a mi juego</button></div></div>`;
 }
 async function loadObserverData(){
