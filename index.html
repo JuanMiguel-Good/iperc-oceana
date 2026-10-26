@@ -383,6 +383,7 @@ const SEC1=[
 const ACT_SEC={"Entre ciudades":["Viajes por carretera","Tránsito, robos y protestas durante la ruta.","auto"],"Muelles":["Muelles pesqueros","Caídas, agua, clima y sol en las instalaciones.","muelle"],"Espacios públicos":["Limpieza en espacios públicos","Sol, robos, alimentos y residuos punzocortantes.","sol"],"Limpieza":["Labores de limpieza","Químicos, esfuerzo, riesgo biológico, polvo y trabajo en solitario.","quimico"]};
 const N1=SEC1.reduce((a,s)=>a+s.ids.length,0);
 const ADMIN_DNI="40667929", OBSERVER_DNIS=["46847952"];
+const canObserve=dni=>OBSERVER_DNIS.includes(dni);
 const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,completed:false,stageSeen:null,admin:false,adminData:null,adminMsg:null,adminErr:null,adminEdit:null,observer:false,obsData:null,obsErr:null};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -701,6 +702,7 @@ function render(){
 function closeModal(){ S.modal=false; render(); const n=$("#nx"); if(n) n.focus(); }
 function bind(){
   const g=$("#go"); if(g) g.onclick=()=>{
+    S.observer=false;
     const dv=($("#dni").value||"").trim(), er=$("#ferr");
     const bad=(m)=>{er.textContent=m; er.hidden=false; $("#dni").focus();};
     er.hidden=true;
@@ -714,12 +716,25 @@ function bind(){
       else startNew();
     };
     if(dv===ADMIN_DNI){ S.admin=true; S.adminData=null; S.adminMsg=null; S.adminErr=null; render(); window.scrollTo({top:0}); if(window._lookupDni) loadAdminData(); return; }
-    S.observer=OBSERVER_DNIS.includes(dv);
+    S.observer=canObserve(dv);
     if(window._lookupDni){ (async()=>{ const p=await window._lookupDni(dv); if(!p||!p.nombre) return bad("No estás registrado. Contacta con quien administra el juego."); enterGame(p.nombre); })(); }
     else { const sv=readSave(dv); if(sv) enterGame(sv.name); else bad("No estás registrado. Contacta con quien administra el juego."); }
   };
   const fr=$("#fresh"); if(fr) fr.onclick=()=>{S.fresh=true; render();};
-  const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ S.observer=OBSERVER_DNIS.includes(S.resume.saved.dni||""); applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
+  const ct=$("#cont"); if(ct) ct.onclick=()=>{
+    const saved=S.resume&&S.resume.saved, typed=($("#dni").value||"").trim();
+    if(saved&&typed!==saved.dni){
+      S.resume=null;
+      S.observer=false;
+      render();
+      const goButton=$("#go");
+      if(goButton) goButton.click();
+      return;
+    }
+    if(saved){ S.observer=canObserve(saved.dni||""); applySave(saved); }
+    else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); }
+    render(); window.scrollTo({top:0});
+  };
   const dn=$("#dni"); if(dn) dn.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};
   if(dn) dn.oninput=()=>{dn.value=dn.value.replace(/\D/g,"").slice(0,8);};
   const abx=$("#adminExit"); if(abx) abx.onclick=()=>{S.admin=false; S.adminData=null; S.adminMsg=null; S.adminErr=null; S.view="start"; render(); window.scrollTo({top:0});};
@@ -922,7 +937,11 @@ function back(){
 }
 $("#back").onclick=back;
 $("#home").onclick=()=>{ goToFichas(); render(); window.scrollTo({top:0}); };
-const onavBtn=$("#obsnav"); if(onavBtn) onavBtn.onclick=()=>{ S.observer=true; S.view="observer"; S.obsData=null; S.obsErr=null; render(); window.scrollTo({top:0}); if(window._lookupDni) loadObserverData(); };
+const onavBtn=$("#obsnav"); if(onavBtn) onavBtn.onclick=()=>{
+  if(!canObserve(S.dni)) return;
+  S.observer=true; S.view="observer"; S.obsData=null; S.obsErr=null;
+  render(); window.scrollTo({top:0}); if(window._lookupDni) loadObserverData();
+};
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.modal) closeModal(); });
 $("#snd").onclick=()=>{SND=!SND; if(SND) chime(); headUpdate();};
 window.S=S; window._rerender=render;
