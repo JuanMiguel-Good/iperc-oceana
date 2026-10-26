@@ -1,5 +1,7 @@
 import { supabase, hasSupabase } from './supabase.js';
 
+window._supabase = supabase;
+
 let debounceTimer = null;
 let pendingSnap = null;
 

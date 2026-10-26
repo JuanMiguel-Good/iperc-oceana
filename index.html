@@ -775,7 +775,7 @@ function adminView(){
 async function loadAdminData(){
   if(!window._lookupDni) return;
   try{
-    const { supabase } = await import('./src/supabase.js');
+    const supabase = window._supabase;
     const { data, error } = await supabase.rpc('listar_participantes');
     if(error){ S.adminErr="No se pudo cargar la lista."; S.adminData=S.adminData||[]; render(); return; }
     S.adminData=data||[]; S.adminErr=null; render();
@@ -786,7 +786,7 @@ async function adminAddOne(){
   S.adminMsg=null; S.adminErr=null;
   if(nv_check(nm,dv)) return;
   try{
-    const { supabase } = await import('./src/supabase.js');
+    const supabase = window._supabase;
     const { error } = await supabase.rpc('agregar_participante', { p_dni: dv, p_nombre: nm });
     if(error){ S.adminErr="No se pudo agregar: "+error.message; render(); return; }
     S.adminMsg=""+nm+" (DNI "+dv+") agregado correctamente."; $("#anm").value=""; $("#adni").value=""; loadAdminData();
@@ -799,7 +799,7 @@ async function adminEditSave(){
   if(nombre.length<5||!/\S+\s+\S+/.test(nombre)){ S.adminErr="Escribe nombre y apellido."; render(); return; }
   S.adminMsg=null; S.adminErr=null;
   try{
-    const { supabase } = await import('./src/supabase.js');
+    const supabase = window._supabase;
     const { error } = await supabase.rpc('editar_participante', { p_dni:S.adminEdit.dni, p_nombre:nombre });
     if(error){ S.adminErr="No se pudo guardar el participante."; render(); return; }
     S.adminEdit=null; S.adminMsg="Participante actualizado correctamente."; await loadAdminData();
@@ -809,7 +809,7 @@ async function adminDelete(dni,nombre){
   if(!window.confirm("¿Eliminar a "+nombre+" del registro de participantes?")) return;
   S.adminMsg=null; S.adminErr=null;
   try{
-    const { supabase } = await import('./src/supabase.js');
+    const supabase = window._supabase;
     const { error } = await supabase.rpc('eliminar_participante', { p_dni:dni });
     if(error){ S.adminErr="No se pudo eliminar el participante."; render(); return; }
     if(S.adminEdit&&S.adminEdit.dni===dni) S.adminEdit=null;
@@ -831,7 +831,7 @@ async function adminAddBulk(){
   }
   if(!items.length){ S.adminErr="No se encontraron entradas validas."; render(); return; }
   try{
-    const { supabase } = await import('./src/supabase.js');
+    const supabase = window._supabase;
     const { data, error } = await supabase.rpc('agregar_participantes_lote', { p_lista: items });
     if(error){ S.adminErr="No se pudo agregar: "+error.message; render(); return; }
     const r=data||{};
@@ -875,7 +875,7 @@ function observerView(){
 async function loadObserverData(){
   if(!window._lookupDni) return;
   try{
-    const { supabase } = await import('./src/supabase.js');
+    const supabase = window._supabase;
     const { data, error } = await supabase.rpc('listar_participantes');
     if(error){ S.obsErr="No se pudo cargar la lista."; S.obsData=S.obsData||[]; render(); return; }
     S.obsData=data||[]; S.obsErr=null; render();
