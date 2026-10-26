@@ -509,7 +509,7 @@ function headUpdate(){
   } else if(S.view==="observer"){
     pr.hidden=true;
   } else pr.hidden=true;
-  const onav=$("#obsnav"); if(onav) onav.hidden = !S.observer || S.view==="observer";
+  const onav=$("#obsnav"); if(onav) onav.hidden = !canObserve(S.dni) || S.view==="observer";
   $("#snd").innerHTML=SND?SND_ON:SND_OFF; $("#snd").setAttribute("aria-pressed",SND?"true":"false"); $("#snd").setAttribute("aria-label",SND?"Sonido activado":"Sonido desactivado");
 }
 function startView(){
