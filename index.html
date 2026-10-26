@@ -208,7 +208,7 @@ details ul{margin:8px 0 0;padding-left:20px}
   <div class="hr"><button class="snd" id="snd" aria-pressed="true" aria-label="Sonido activado"></button><div class="stars" id="starsbox" aria-live="polite"></div></div>
 </header>
 <div class="prog" id="prog" hidden><div class="prog-top"><span id="plabel"></span><span id="pcount"></span></div><div class="track" aria-hidden="true"><i id="pfill"></i></div></div>
-<div class="navrow" id="navrow" hidden><button class="nv" id="back" type="button"><span aria-hidden="true">←</span><span id="back-label">Atrás</span></button><button class="nv" id="home" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Inicio</button></div>
+<div class="navrow" id="navrow" hidden><button class="nv" id="back" type="button"><span aria-hidden="true">←</span><span id="back-label">Atrás</span></button><button class="nv" id="home" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Inicio</button><button class="nv" id="obsnav" type="button" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Estatus</button></div>
 <main id="main" tabindex="-1"></main>
 </div>
 
@@ -382,8 +382,8 @@ const SEC1=[
 ];
 const ACT_SEC={"Entre ciudades":["Viajes por carretera","Tránsito, robos y protestas durante la ruta.","auto"],"Muelles":["Muelles pesqueros","Caídas, agua, clima y sol en las instalaciones.","muelle"],"Espacios públicos":["Limpieza en espacios públicos","Sol, robos, alimentos y residuos punzocortantes.","sol"],"Limpieza":["Labores de limpieza","Químicos, esfuerzo, riesgo biológico, polvo y trabajo en solitario.","quimico"]};
 const N1=SEC1.reduce((a,s)=>a+s.ids.length,0);
-const ADMIN_DNI="40667929";
-const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,completed:false,stageSeen:null,admin:false,adminData:null,adminMsg:null,adminErr:null,adminEdit:null};
+const ADMIN_DNI="40667929", OBSERVER_DNIS=["46847952"];
+const S={fresh:false,hist:{},resume:null,secs1:[],p1len:0,p1pts:0,secLog:0,view:"start",name:"",dni:"",pts:0,phase:1,secs:[],si:0,qi:0,log:[],puesto:null,cs:null,modal:false,completed:false,stageSeen:null,admin:false,adminData:null,adminMsg:null,adminErr:null,adminEdit:null,observer:false,obsData:null,obsErr:null};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
@@ -486,8 +486,8 @@ function headUpdate(){
   $("#back-label").textContent=S.view==="intro"?"Salir":"Atrás";
   const pr=$("#prog");
   const nav=$("#navrow");
-  nav.hidden=S.view==="start";
-  nav.style.display=S.view==="start"?"none":"flex";
+  nav.hidden=S.view==="start"||S.view==="observer";
+  nav.style.display=(S.view==="start"||S.view==="observer")?"none":"flex";
   if(S.completed&&S.view==="intro"){
     pr.hidden=false;
     $("#plabel").textContent="Actividad completada";
@@ -505,7 +505,10 @@ function headUpdate(){
     $("#plabel").textContent=S.view==="result"?"Avance total":(S.phase===1?"Parte 1":"Parte 2")+" · Sección "+(S.si+1)+" de "+S.secs.length+" · "+sec().title;
     $("#pcount").textContent=S.phase===1?"Fase 1 · "+pct+"% · "+progressStage(pct)+(S.view==="play"?" · Caso "+(S.qi+1)+" de "+sec().cases.length:""):pct+"% · "+progressStage(pct);
     $("#pfill").style.width=pct+"%";
+  } else if(S.view==="observer"){
+    pr.hidden=true;
   } else pr.hidden=true;
+  const onav=$("#obsnav"); if(onav) onav.hidden = !S.observer || S.view==="observer";
   $("#snd").innerHTML=SND?SND_ON:SND_OFF; $("#snd").setAttribute("aria-pressed",SND?"true":"false"); $("#snd").setAttribute("aria-label",SND?"Sonido activado":"Sonido desactivado");
 }
 function startView(){
@@ -641,7 +644,7 @@ const SKEY="detectives-seguridad:v1:", LAST="detectives-seguridad:ultimo";
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
 function saveProgress(){
-  if(S.admin||!S.dni||!S.name||!S.secs.length) return;
+  if(S.admin||S.observer||!S.dni||!S.name||!S.secs.length) return;
   let view=S.view;
   if(view==="start"){ if(!S.resume) return; view=S.resume; }
   const snap={v:1,t:Date.now(),name:S.name,dni:S.dni,pts:S.pts,phase:S.phase,si:S.si,qi:S.qi,view,log:S.log,hist:S.hist,stageSeen:S.stageSeen,
@@ -666,6 +669,7 @@ function applySave(d){
 function continueFromSave(d){
   applySave(d);
   if(d.completed){ S.view="intro"; return; }
+  if(S.observer) return;
   if(d.view==="result"||d.view==="home") return;
   if(d.view==="summary"){ 
     if(S.si<S.secs.length-1){ S.si++; S.qi=0; S.view="intro"; }
@@ -691,7 +695,7 @@ function goToFichas(){
 (function(){ const last=lsGet(LAST); const d=last&&readSave(last); if(d){ S.name=d.name; S.dni=d.dni; S.resume={saved:d}; } })();
 function render(){
   const m=$("#main");
-  m.innerHTML=S.view==="start"?startView():S.view==="home"?part1HomeView():S.view==="intro"?introView():S.view==="play"?caseView():S.view==="summary"?summaryView():S.view==="pick"?pickView():resultView();
+  m.innerHTML=S.view==="start"?startView():S.view==="home"?part1HomeView():S.view==="intro"?introView():S.view==="play"?caseView():S.view==="summary"?summaryView():S.view==="pick"?pickView():S.view==="observer"?observerView():resultView();
   headUpdate(); bind(); saveProgress();
 }
 function closeModal(){ S.modal=false; render(); const n=$("#nx"); if(n) n.focus(); }
@@ -710,11 +714,12 @@ function bind(){
       else startNew();
     };
     if(dv===ADMIN_DNI){ S.admin=true; S.adminData=null; S.adminMsg=null; S.adminErr=null; render(); window.scrollTo({top:0}); if(window._lookupDni) loadAdminData(); return; }
+    S.observer=OBSERVER_DNIS.includes(dv);
     if(window._lookupDni){ (async()=>{ const p=await window._lookupDni(dv); if(!p||!p.nombre) return bad("No estás registrado. Contacta con quien administra el juego."); enterGame(p.nombre); })(); }
     else { const sv=readSave(dv); if(sv) enterGame(sv.name); else bad("No estás registrado. Contacta con quien administra el juego."); }
   };
   const fr=$("#fresh"); if(fr) fr.onclick=()=>{S.fresh=true; render();};
-  const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
+  const ct=$("#cont"); if(ct) ct.onclick=()=>{ if(S.resume&&S.resume.saved){ S.observer=OBSERVER_DNIS.includes(S.resume.saved.dni||""); applySave(S.resume.saved); } else { S.view=S.resume; S.resume=null; if(S.view==="play") newCase(); } render(); window.scrollTo({top:0});};
   const dn=$("#dni"); if(dn) dn.onkeydown=e=>{if(e.key==="Enter"&&g) g.click();};
   if(dn) dn.oninput=()=>{dn.value=dn.value.replace(/\D/g,"").slice(0,8);};
   const abx=$("#adminExit"); if(abx) abx.onclick=()=>{S.admin=false; S.adminData=null; S.adminMsg=null; S.adminErr=null; S.view="start"; render(); window.scrollTo({top:0});};
@@ -725,6 +730,8 @@ function bind(){
   const aec=$("#adminCancelEdit"); if(aec) aec.onclick=()=>{ S.adminEdit=null; S.adminErr=null; render(); };
   document.querySelectorAll("[data-admin-edit]").forEach(b=>b.onclick=()=>{ S.adminEdit={dni:b.dataset.adminEdit,nombre:b.dataset.adminName}; S.adminMsg=null; S.adminErr=null; render(); });
   document.querySelectorAll("[data-admin-delete]").forEach(b=>b.onclick=()=>{ adminDelete(b.dataset.adminDelete,b.dataset.adminName); });
+  const obx=$("#obsExit"); if(obx) obx.onclick=()=>{S.view="intro"; render(); window.scrollTo({top:0});};
+  const obr=$("#obsReload"); if(obr) obr.onclick=()=>{ loadObserverData(); };
   const bg=$("#begin"); if(bg) bg.onclick=()=>{S.qi=0; S.secLog=S.log.length; newCase(); S.view="play"; render(); window.scrollTo({top:0});};
   const sn=$("#secnow"); if(sn) sn.onclick=()=>{
     if(S.si<S.secs.length-1){S.si++; S.view="intro";}
@@ -833,6 +840,26 @@ async function adminAddBulk(){
     $("#abulk").value=""; loadAdminData();
   }catch(e){ S.adminErr="Error de conexión."; render(); }
 }
+/* ---- Observador: estatus de avance (solo lectura) ---- */
+function observerView(){
+  const list=(S.obsData||[]);
+  const rows=list.map(r=>`<tr><td>${esc(r.nombre)}</td><td>${esc(r.dni)}</td><td>${r.completado?"<span class=\"ok\">Completado</span>":r.actualizado_en?"En progreso":"Sin iniciar"}</td><td>${r.puntos!=null?r.puntos:"-"}</td></tr>`).join("");
+  return `<div class="card"><div class="eyebrow">Estatus del grupo</div><h1>Avance de participantes</h1>
+  <p style="margin:0 0 16px">Consulta el estado de quienes van completando el juego. Esta vista es de solo lectura.</p>
+  ${S.obsErr?`<div class="fb no" role="alert">${esc(S.obsErr)}</div>`:""}
+  <h3>Participantes registrados (${list.length})</h3>
+  ${list.length?`<div class="row" style="justify-content:flex-end;margin-bottom:10px"><button class="btn alt" id="obsReload">Actualizar lista</button></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.9rem"><thead><tr style="text-align:left;color:var(--muted);border-bottom:2px solid var(--line)\"><th style=\"padding:8px 6px\">Nombre</th><th style=\"padding:8px 6px\">DNI</th><th style=\"padding:8px 6px\">Estado</th><th style=\"padding:8px 6px\">Puntos</th></tr></thead><tbody>${rows}</tbody></table></div>`:`<p style="color:var(--muted)">Aún no hay participantes registrados.</p><div class="row"><button class="btn alt" id="obsReload">Cargar lista</button></div>`}
+  <div class="row" style="margin-top:20px"><button class="btn alt" id="obsExit">Volver a mi juego</button></div></div>`;
+}
+async function loadObserverData(){
+  if(!window._lookupDni) return;
+  try{
+    const { supabase } = await import('./src/supabase.js');
+    const { data, error } = await supabase.rpc('listar_participantes');
+    if(error){ S.obsErr="No se pudo cargar la lista."; S.obsData=S.obsData||[]; render(); return; }
+    S.obsData=data||[]; S.obsErr=null; render();
+  }catch(e){ S.obsErr="Error de conexión."; render(); }
+}
 function tapHot(el){
   const cs=S.cs; if(!cs||cs.step!=="find") return;
   const sc=SCENES[cs.scene], id=el.dataset.id, h=sc.hot[id];
@@ -874,6 +901,7 @@ function back(){
 }
 $("#back").onclick=back;
 $("#home").onclick=()=>{ goToFichas(); render(); window.scrollTo({top:0}); };
+const onavBtn=$("#obsnav"); if(onavBtn) onavBtn.onclick=()=>{ S.observer=true; S.view="observer"; S.obsData=null; S.obsErr=null; render(); window.scrollTo({top:0}); if(window._lookupDni) loadObserverData(); };
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&S.modal) closeModal(); });
 $("#snd").onclick=()=>{SND=!SND; if(SND) chime(); headUpdate();};
 window.S=S; window._rerender=render;
